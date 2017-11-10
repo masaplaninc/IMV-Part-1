@@ -11,8 +11,7 @@ var triangleVertexColorBuffer;
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 
-
-
+// color array
 // var black = [0.0, 0.0, 0.0, 1.0];
 var red = [1.0, 0.0, 0.2, 1.0];
 var blue = [0.0, 0.2, 1.0, 1.0];
@@ -22,6 +21,10 @@ var white = [1.0, 1.0, 1.0, 1.0];
 var colorArray = [red, blue, green, white];
 var colorIndex = 0;
 var colors = colorArray[colorIndex].concat(colorArray[colorIndex]).concat(colorArray[colorIndex]);
+
+
+var midiFile;
+
 
 
 //
@@ -242,6 +245,7 @@ function drawScene() {
 // Figuratively, that is. There's nothing moving in this demo.
 //
 function start() {
+    
     canvas = document.getElementById("glcanvas");
 
     gl = initGL(canvas);      // Initialize the GL context
@@ -281,6 +285,27 @@ function checkPressedKey(e) {
     colorIndex = (colorIndex + 1) % colorArray.length;
     
     console.log(colorIndex);
-
-
 }
+
+
+
+$(function() {
+    /*
+     * Initialize file upload
+     */
+    $('#file_upload').on('change', function() {
+        localStorage.clear();
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                play(e.target.result);
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+
+    // initWebGL();
+
+    loadPlugin();
+});

@@ -1,7 +1,56 @@
 <head>
+
+    <link rel="stylesheet" href="css/style.css">
+    <script src="lib/glMatrix-0.9.5.min.js"></script>
+
     <script src="js/core.js" type="text/javascript"></script>
+
+    <!-- Fragment shader program -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+		    // set medium percision
+		    precision mediump float;
+
+		    // uniform attribute for setting the color
+		    varying vec4 vColor;
+			// spremenljivka se prenese iz vertex shaderja v fragment shader
+			// in se interpolira iz natancnosti za vsako vozlisce v natancnost za vsak pixel
+
+		    void main(void) {
+	        	// Setting color of fragments to input color
+		        gl_FragColor = vColor;
+		    }
+	    </script>
+
+
+    <!-- Vertex shader program -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+    		// atributes for setting vertex position and color
+		    attribute vec3 aVertexPosition;
+		    attribute vec4 aVertexColor; // barva
+
+		    uniform mat4 uMVMatrix;	// model-view matrix
+		    uniform mat4 uPMatrix;	// projection matrix
+
+		    varying vec4 vColor;	// variable for passing color value to the fragment shader
+
+			// bilinearna interpolacija
+			// iz vertexov -> na piksle
+			// ubistvu se to zgodi pri rasterizaciji
+
+
+		    void main(void) {
+		    	// calculate the vertex position
+		        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		        vColor = aVertexColor;
+		    }
+	    </script>
+
 </head>
 
-<body>
+<body onload="start()" onkeypress="checkPressedKey(event)">
+
+<canvas id="glcanvas" width="1280px" height="720px">
+    No <code>&lt;canvas&gt;</code> suppport in your browser.
+</canvas>
     
 </body>

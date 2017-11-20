@@ -154,6 +154,8 @@ function loadPlugin() {
 }
 
 var channelsInstruments = null;
+var minNote = 128;
+var maxNote = -1;
 
 function play(data) {
 	$('#info_text').text('Loading track');
@@ -167,8 +169,19 @@ function play(data) {
 			$('#toggle').attr('disabled', false);
 			console.log('Song loaded');
             
-            channelsInstruments = MIDI.Player.getFileChannelInstruments();
-            instrumentsNames = MIDI.Player.getFileInstruments();
+      for (var i = 0; i < MIDI.Player.data.length; i++) {
+        var event = MIDI.Player.data[i][0].event;
+        if (event.subtype == "noteOn") {
+          minNote = event.noteNumber < minNote ? event.noteNumber : minNote;
+          maxNote = event.noteNumber > maxNote ? event.noteNumber : maxNote;
+        }
+      }
+
+      console.log("min = " + minNote);
+      console.log("max = " + maxNote);
+
+      channelsInstruments = MIDI.Player.getFileChannelInstruments();
+      instrumentsNames = MIDI.Player.getFileInstruments();
 
 			MIDI.Player.start();
 		}

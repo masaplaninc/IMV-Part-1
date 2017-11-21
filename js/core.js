@@ -18,7 +18,8 @@ var color = red;
 
 var midiFile;
 
-
+var expectLow = false;
+var expectHigh = false;
 
 //
 // initGL
@@ -276,8 +277,6 @@ function checkPressedKey(e) {
     color = [Math.random(), Math.random(), Math.random(), 1.0];
 }
 
-
-
 $(function() {
     /*
      * Initialize file upload
@@ -293,8 +292,13 @@ $(function() {
         }
     });
 
-
-    // initWebGL();
-
     loadPlugin();
 });
+
+function lowNote() {
+    expectLow = true;
+}
+
+function highNote() {
+    expectHigh = true;
+}

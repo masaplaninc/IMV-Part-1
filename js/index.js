@@ -13,8 +13,14 @@ var lastTime = 0;
 var app = {};
 app.meshes = {};
 
+// coordinates for view through tunnel
+var startXposition = 2.23, startYposition = -3.6;
 var startZposition = -10;
+var tunnelLen = 12;
+var endZposition = startZposition + tunnelLen;
+
 var Zposition = startZposition;
+
 
 // BUFFERS:
 // vertexBuffer
@@ -354,10 +360,22 @@ function drawScene() {
 
     // Now move the drawing position a bit to where we want to start
     // drawing the world.
-    mat4.translate(mvMatrix, [2.23, -3.6, Zposition]); // as close to center of the tunnel as I get
+
+
+    mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
+
+
+    if (Zposition >= endZposition - 10) {
+        startZposition = endZposition;
+        endZposition += tunnelLen;
+    }
+
+    // fIRST tunnel - where we start
+    mvPushMatrix();
+
+    mat4.translate(mvMatrix, [0, 0, -startZposition]);
 
     mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
-
     // Activate textures
     // NO TEXTURES YET
     /*
@@ -370,8 +388,78 @@ function drawScene() {
     // Activate shininess
     gl.uniform1f(shaderProgram.materialShininessUniform, true);
 
-    drawObject(app.meshes.gridFrame);
+    // drawObject(app.meshes.gridFrame); // problems
     drawObject(app.meshes.gridFaces);
+
+    mvPopMatrix();
+
+
+    // second tunnel
+    mvPushMatrix();
+
+    mat4.translate(mvMatrix, [0, 0, -endZposition]);
+
+    mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
+    // Activate textures
+    // NO TEXTURES YET
+    /*
+     gl.activeTexture(gl.TEXTURE0);
+     gl.bindTexture(gl.TEXTURE_2D, gridTexture);
+     */
+
+    gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+    // Activate shininess
+    gl.uniform1f(shaderProgram.materialShininessUniform, true);
+
+    // drawObject(app.meshes.gridFrame); // problems
+    drawObject(app.meshes.gridFaces);
+
+    mvPopMatrix();
+
+    // third tunnel
+    mvPushMatrix();
+
+    mat4.translate(mvMatrix, [0, 0, -endZposition-tunnelLen]);
+
+    mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
+    // Activate textures
+    // NO TEXTURES YET
+    /*
+     gl.activeTexture(gl.TEXTURE0);
+     gl.bindTexture(gl.TEXTURE_2D, gridTexture);
+     */
+
+    gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+    // Activate shininess
+    gl.uniform1f(shaderProgram.materialShininessUniform, true);
+
+    // drawObject(app.meshes.gridFrame); // problems
+    drawObject(app.meshes.gridFaces);
+
+    mvPopMatrix();
+
+
+    // Two spikes
+
+    mvPushMatrix();
+    mat4.translate(mvMatrix, [-startXposition, 0, -2]);
+
+    drawObject(app.meshes.spikeFaces);
+    drawObject(app.meshes.spikeFrame);
+
+    mvPopMatrix();
+
+
+    mvPushMatrix();
+    mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
+    mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
+
+    drawObject(app.meshes.spikeFaces);
+    drawObject(app.meshes.spikeFrame);
+
+    mvPopMatrix();
 
 }
 
@@ -385,12 +473,12 @@ function animate() {
     var timeNow = new Date().getTime();
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
-        Zposition += 0.1; // change Z coordinate to move through the tunnel
-        console.log(Zposition);
 
-        if (Zposition >= 1) { // temporary - so it doesn't run into the wild
-            Zposition = startZposition;
-        }
+        Zposition += 0.05; // change Z coordinate to move through the tunnel
+
+        // if (Zposition >= 2) { // temporary - so it doesn't run into the wild
+        //     Zposition = startZposition;
+        // }
     }
     lastTime = timeNow;
 }
@@ -422,7 +510,7 @@ function webGLStart(meshes) {
     // initialize meshes
     app.meshes = meshes;
     // initialize the VBOs
-    OBJ.initMeshBuffers(gl, app.meshes.gridFrame);
+    // OBJ.initMeshBuffers(gl, app.meshes.gridFrame);
     OBJ.initMeshBuffers(gl, app.meshes.gridFaces);
     OBJ.initMeshBuffers(gl, app.meshes.spikeFrame);
     OBJ.initMeshBuffers(gl, app.meshes.spikeFaces);
@@ -455,9 +543,9 @@ function webGLStart(meshes) {
 // load meshes when page loads
 window.onload = function () {
     OBJ.downloadMeshes({
-        'gridFrame': 'assets/gridokvir.obj',
+        // 'gridFrame': 'assets/gridokvir.obj',
         'gridFaces': 'assets/gridploskve.obj',
         'spikeFrame': 'assets/spicaokvir.obj',
-        'spikeFaces': 'assets/spicaploskve.obj'
+        'spikeFaces': 'assets/spicaploskve.obj',
     }, webGLStart);
 }

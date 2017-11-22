@@ -71,6 +71,8 @@
 
         uniform float uTime;
         uniform vec3 uCamera;
+        uniform vec3 uCenter;
+        uniform float uScale;
 
         varying vec2 vPos;
 
@@ -78,11 +80,9 @@
 
         #define MARCH_STEPS 8
         #define RADIUS 2.0
-
         #define NOISE_AMP 0.06
         #define NOISE_FREQUENCY 4.0
-        #define Animation vec3(0.0, -3.0, 0.5)
-        
+        #define ANIMATION vec3(0.0, -3.0, 0.5)
         #define BACKGROUND vec4(0.0)
         #define C1 vec4(0.0, 0.0, 0.0, 1.0)
         #define C2 vec4(0.6, 0.2, 0.8, 1.0)
@@ -165,7 +165,7 @@
         }
 
         float renderBall(vec3 position, vec3 c, float r, out float distance) {
-            float noise = turbulence(position * NOISE_FREQUENCY + Animation * uTime, 0.1, 1.5, 0.03) * NOISE_AMP;
+            float noise = turbulence(position * NOISE_FREQUENCY + ANIMATION * uTime, 0.1, 1.5, 0.03) * NOISE_AMP;
             noise = saturate(abs(noise));
             distance = sphereDist(position, c, r) - noise;
             return noise;
@@ -193,15 +193,7 @@
             return d >= 0.0;
         }
 
-        void main(void) {
-            float scales[2];
-            scales[0] = 1.0;
-            scales[1] = 1.5;
-            
-            vec3 centers[2];
-            centers[0] = vec3(scales[0] * 3.0, 0.0, 0.0);
-            centers[1] = vec3(scales[1] * -3.0, 0.0, 0.0);
-                                
+        void main(void) {                                
             vec3 ww = normalize(vec3(0.0, 0.0, 0.0) - uCamera);
             vec3 uu = normalize(cross(vec3(0.0, 1.0, 0.0), ww));
             vec3 vv = normalize(cross(ww, uu));
@@ -210,10 +202,8 @@
             vec4 col = BACKGROUND;
             vec3 intersection;
 
-            for (int i=0; i<2; i++) {
-                if(intersectSphere(uCamera, direction, centers[i], scales[i] * RADIUS + NOISE_AMP*6.0, intersection)) {
-                    col = march(intersection, direction, centers[i], scales[i] * RADIUS);
-                }
+            if(intersectSphere(uCamera, direction, uCenter, uScale * RADIUS + NOISE_AMP*6.0, intersection)) {
+                col = march(intersection, direction, uCenter, uScale * RADIUS);
             }
 
             gl_FragColor = col;
@@ -222,7 +212,7 @@
 
 </head>
 
-<body onload="start()" onkeypress="checkPressedKey(event)">
+<body onload="start()" onkeypress="addBall(63, 63)">
 
 <span>
     Load MIDI file:
@@ -232,7 +222,8 @@
 <button onclick="lowNote()">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
 <button onclick="highNote()">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
 
-<canvas id="glcanvas" width="1280px" height="720px">
+<!-- <canvas id="glcanvas" width="1280px" height="720px"> -->
+<canvas id="glcanvas" width="1024px" height="576px">
     No <code>&lt;canvas&gt;</code> suppport in your browser.
 </canvas>
 

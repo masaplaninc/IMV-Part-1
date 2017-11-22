@@ -1,3 +1,8 @@
+const SCALE = 1;
+const MAX_DIST = 100;
+const MAX_POS = 5;
+const DELTA_BALLS = 0.1;
+
 var canvas;
 var gl;
 
@@ -16,6 +21,7 @@ var skyboxIndexBuffer;
 // ballls
 var ballsShaderProgram;
 var bannerVertexBuffer;
+var balls = []
 
 //
 // initGL
@@ -131,6 +137,8 @@ function initShaders() {
     ballsShaderProgram.timeUniform = gl.getUniformLocation(ballsShaderProgram, "uTime");
     ballsShaderProgram.aspectRatioUniform = gl.getUniformLocation(ballsShaderProgram, "uAspectRatio");
     ballsShaderProgram.cameraUniform = gl.getUniformLocation(ballsShaderProgram, "uCamera");
+    ballsShaderProgram.centerUniform = gl.getUniformLocation(ballsShaderProgram, "uCenter");
+    ballsShaderProgram.scaleUniform = gl.getUniformLocation(ballsShaderProgram, "uScale");
 }
 
 function setSkyboxUniforms() {
@@ -140,11 +148,13 @@ function setSkyboxUniforms() {
     gl.uniformMatrix4fv(skyboxShaderProgram.mvMatrixUniform, false, mvMatrix);
 }
 
-function setBallsUniforms() {
+function setBallUniforms(position, scale) {
     gl.useProgram(ballsShaderProgram);
     gl.uniform1f(ballsShaderProgram.timeUniform, 0.001 * (new Date().getTime() - startTime));
     gl.uniform1f(ballsShaderProgram.aspectRatioUniform, gl.viewportWidth / gl.viewportHeight);
     gl.uniform3fv(ballsShaderProgram.cameraUniform, camera);
+    gl.uniform3fv(ballsShaderProgram.centerUniform, position);
+    gl.uniform1f(ballsShaderProgram.scaleUniform, scale);
 }
 
 function initBuffers() {
@@ -217,12 +227,13 @@ function drawScene() {
     gl.drawElements(gl.TRIANGLES, skyboxIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
     // balls
-    setBallsUniforms();
-
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
     gl.vertexAttribPointer(ballsShaderProgram.vertexPositionAttribute, bannerVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems);
+
+    for (var i=0; i<balls.length; i++) {
+        setBallUniforms(balls[i].position, balls[i].scale);        
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems); 
+    }    
 }
 
 function start() {
@@ -252,11 +263,15 @@ function start() {
     }
 }
 
-function animate() {
+function addBall(note, velocity) {
+    balls.push({position: [0, 0, 0], scale: SCALE * velocity / 127});
+    console.log(balls[0]);
 }
 
-function checkPressedKey(e) {
-    color = [Math.random(), Math.random(), Math.random(), 1.0];
+function animate() {
+    for (var i=0; i<balls.length; i++) {
+        balls[i].position[2] += DELTA_BALLS;
+    } 
 }
 
 $(function() {

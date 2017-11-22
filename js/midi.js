@@ -10,7 +10,7 @@ function initListener() {
 	MIDI.Player.addListener(
 		function(data) {
       if (data.message == NOTE_ON) {
-        checkPressedKey();
+        addBall(data.note, data.velocity);
       }
     }
 	);
@@ -102,8 +102,8 @@ function getChannel(msg) {
 }
 
 function onMIDIMessage(message) {
- data = message.data; // this gives us our [command/channel, note, velocity] data.
-  console.log('MIDI data', data); // MIDI data [144, 63, 73]
+ data = message.data;
+  // console.log('MIDI data', data);
 
   if (getStatus(data[0]) == NOTE_ON) {
     if (expectLow) {
@@ -119,7 +119,7 @@ function onMIDIMessage(message) {
       expectHigh = false;
     }
     else {
-      checkPressedKey();
+      addBall(data[1], data[2]);
     }
   }
 }

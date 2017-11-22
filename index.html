@@ -2,7 +2,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <link rel="stylesheet" href="css/style.css">
 
-
     <script src="lib/glMatrix-0.9.5.min.js"></script>
 
     <!-- jquery -->
@@ -24,50 +23,61 @@
     <!-- Own sources -->
     <script src="./js/midi.js"></script>
     <script src="js/core.js" type="text/javascript"></script>
+    
+    <!-- SKYBOX -->
+    <script id="shader-vs-skybox" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
 
-    <script id="shader-fs" type="x-shader/x-fragment">
-		    precision mediump float;
+        uniform mat4 uMVMatrix; // model-view matrix
+        uniform mat4 uPMatrix;  // projection matrix
 
-            varying vec2 pos;
+        varying vec3 vColor;
 
-            // fireballs inspired by https://www.shadertoy.com/view/MtXSzS
-            #define saturate(oo) clamp(oo, 0.0, 1.0)
-
-            // Quality Settings
-            #define MarchSteps 8
-            // Scene Settings
-            #define RADIUS 2.0
-            #define BGCOLOR vec4(0.1, 0.0, 0.7, 1.0)
-            // Noise Settings
-            #define NoiseSteps 1
-            #define NoiseAmplitude 0.06
-            float NoiseFrequency = 4.0; // make this into uniform
-            #define Animation vec3(0.0, -3.0, 0.5)
-            
-            #define C1 vec4(0.0, 0.0, 0.0, 1.0)
-            #define C2 vec4(0.6, 0.2, 0.8,1.0)
-            #define C3 vec4(1.0, 0.55, 0.0,1.0)
-            #define C4 vec4(1.0, 1.0, 0.5, 1.0)
-
-
-
-
-		    void main(void) {
-                gl_FragColor = vec4(mix(BGCOLOR.xyz, vec3(0.0, 0.0, 0.0), step(pos.x, 0.5)), 1.0);
-		    }
-
+        void main(void) {
+            vColor = aVertexPosition;
+            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        }
     </script>
 
-    <script id="shader-vs" type="x-shader/x-vertex">
-		    attribute vec2 aVertexPosition;
+    <script id="shader-fs-skybox" type="x-shader/x-fragment">
+        precision mediump float;
 
-            varying vec2 pos;
+        varying vec3 vColor;
 
-		    void main(void) {
-                pos = (aVertexPosition.xy + vec2(1.0)) / 2.0;
-		        gl_Position = vec4(aVertexPosition, 0.0,  1.0);
-		    }
+        void main(void) {
+            gl_FragColor = vec4(vColor, 1.0);
+        }
+    </script>
 
+    <!-- BALLS -->
+    <script id="shader-vs-balls" type="x-shader/x-vertex">
+        attribute vec2 aVertexPosition;
+
+        varying vec2 vPos;
+
+        void main(void) {
+            // vPos = (aVertexPosition + vec2(1.0)) / 2.0;
+            vPos = aVertexPosition;
+            gl_Position = vec4(aVertexPosition, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="shader-fs-balls" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec2 vPos;
+            
+        #define C1 vec4(0.0, 0.0, 0.0, 1.0)
+        #define C2 vec4(0.6, 0.2, 0.8, 1.0)
+        #define C3 vec4(1.0, 0.55, 0.0, 1.0)
+        #define C4 vec4(1.0, 1.0, 0.5, 1.0)
+
+        #define ALPHA 0.5
+
+        void main(void) {
+            //gl_FragColor = vec4(mix(C3.xyz, C2.xyz, step(0.05, vPos.x * vPos.x + vPos.y * vPos.y)), ALPHA);
+            gl_FragColor = mix(C3, vec4(0.0), step(0.05, vPos.x * vPos.x + vPos.y * vPos.y));
+        }
     </script>
 
 </head>

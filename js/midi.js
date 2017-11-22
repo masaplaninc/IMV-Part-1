@@ -2,6 +2,7 @@ const NOTE_OFF = 128;
 const NOTE_ON = 144;
 
 // Handling MIDI file
+var midiFile;
 
 var pathView = 'explode';
 

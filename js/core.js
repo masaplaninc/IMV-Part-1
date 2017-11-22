@@ -1,12 +1,15 @@
 const SCALE = 1;
 const MAX_DIST = 100;
 const MAX_POS = 5;
-const DELTA_BALLS = 0.1;
+const SPEED_BALLS = 0.01;
+const OFFSET_START = 3
 
 var canvas;
 var gl;
 
 var startTime = new Date().getTime();
+var lastTime = 0;
+
 var camera = [0, 0, -10];
 
 // Model-View and Projection matrices
@@ -264,14 +267,26 @@ function start() {
 }
 
 function addBall(note, velocity) {
-    balls.push({position: [0, 0, 0], scale: SCALE * velocity / 127});
-    console.log(balls[0]);
+    var x = Math.random() * (2 * MAX_POS) - MAX_POS;
+    var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS) - MAX_POS;
+    var z = camera[2] + OFFSET_START;
+    balls.push({position: [x, y, z], scale: SCALE * velocity / 127});
 }
 
 function animate() {
-    for (var i=0; i<balls.length; i++) {
-        balls[i].position[2] += DELTA_BALLS;
-    } 
+    var timeNow = new Date().getTime();
+    if (lastTime != 0) {
+        var elapsed = timeNow - lastTime;
+        for (var i=0; i<balls.length; i++) {
+            if (balls[i].position[2] - camera[2] > MAX_DIST) {
+                balls.splice(i, 1);
+            }
+            else {
+                balls[i].position[2] += elapsed * SPEED_BALLS;
+            }
+        } 
+    }
+    lastTime = timeNow;
 }
 
 $(function() {

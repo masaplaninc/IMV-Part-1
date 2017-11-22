@@ -276,6 +276,9 @@ function start() {
 }
 
 function animate() {
+
+	// also bind the buffer again
+	// to prevent weird errors
     colors = colorArray[colorIndex].concat(colorArray[colorIndex]).concat(colorArray[colorIndex]);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
 

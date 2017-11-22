@@ -188,8 +188,10 @@ $(function() {
 
 function lowNote() {
     expectLow = true;
+    document.getElementById("midiLow").className = "expectMIDI";
 }
 
 function highNote() {
     expectHigh = true;
+    document.getElementById("midiHigh").className = "expectMIDI";
 }

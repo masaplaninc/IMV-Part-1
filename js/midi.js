@@ -108,11 +108,13 @@ function onMIDIMessage(message) {
     if (expectLow) {
       minNote = data[1];
       document.getElementById("midiLow").innerHTML = "min = " + minNote;
+      document.getElementById("midiLow").className = "noMIDI";
       expectLow = false;
     }
     else if (expectHigh) {
       maxNote = data[1];
       document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
+      document.getElementById("midiHigh").className = "noMIDI";
       expectHigh = false;
     }
     else {

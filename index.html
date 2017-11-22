@@ -79,8 +79,8 @@
     <input type="file" id="file_upload"/>
 </span>
 
-<button onclick="lowNote()">Send lowest MIDI note</button><span id="midiLow">min = 0</span>
-<button onclick="highNote()">Send highest MIDI note</button><span id="midiHigh">max = 127</span>
+<button onclick="lowNote()">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
+<button onclick="highNote()">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
 
 <canvas id="glcanvas" width="1280px" height="720px">
     No <code>&lt;canvas&gt;</code> suppport in your browser.

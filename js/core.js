@@ -1,6 +1,9 @@
 var canvas;
 var gl;
 
+var startTime = new Date().getTime();
+var camera = [0, 0, -10];
+
 // Model-View and Projection matrices
 var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
@@ -124,6 +127,24 @@ function initShaders() {
 
     ballsShaderProgram.vertexPositionAttribute = gl.getAttribLocation(ballsShaderProgram, "aVertexPosition");
     gl.enableVertexAttribArray(ballsShaderProgram.vertexPositionAttribute);
+
+    ballsShaderProgram.timeUniform = gl.getUniformLocation(ballsShaderProgram, "uTime");
+    ballsShaderProgram.aspectRatioUniform = gl.getUniformLocation(ballsShaderProgram, "uAspectRatio");
+    ballsShaderProgram.cameraUniform = gl.getUniformLocation(ballsShaderProgram, "uCamera");
+}
+
+function setSkyboxUniforms() {
+    gl.useProgram(skyboxShaderProgram);
+
+    gl.uniformMatrix4fv(skyboxShaderProgram.pMatrixUniform, false, pMatrix);
+    gl.uniformMatrix4fv(skyboxShaderProgram.mvMatrixUniform, false, mvMatrix);
+}
+
+function setBallsUniforms() {
+    gl.useProgram(ballsShaderProgram);
+    gl.uniform1f(ballsShaderProgram.timeUniform, 0.001 * (new Date().getTime() - startTime));
+    gl.uniform1f(ballsShaderProgram.aspectRatioUniform, gl.viewportWidth / gl.viewportHeight);
+    gl.uniform3fv(ballsShaderProgram.cameraUniform, camera);
 }
 
 function initBuffers() {
@@ -177,11 +198,6 @@ function initBuffers() {
     bannerVertexBuffer.numItems = 4;
 }
 
-function setSkyboxUniforms() {
-    gl.uniformMatrix4fv(skyboxShaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(skyboxShaderProgram.mvMatrixUniform, false, mvMatrix);
-}
-
 function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -191,8 +207,6 @@ function drawScene() {
     // mat4.translate(mvMatrix, CAMERA_POSITION);
     
     // skybox
-    gl.useProgram(skyboxShaderProgram);
-
     setSkyboxUniforms();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexBuffer);
@@ -203,7 +217,7 @@ function drawScene() {
     gl.drawElements(gl.TRIANGLES, skyboxIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 
     // balls
-    gl.useProgram(ballsShaderProgram);
+    setBallsUniforms();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
     gl.vertexAttribPointer(ballsShaderProgram.vertexPositionAttribute, bannerVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);

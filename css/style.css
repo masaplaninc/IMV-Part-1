@@ -1,3 +1,9 @@
+body {
+    background-color: #10001f;
+    color: tomato;
+    font-family: sans-serif;
+}
+
 canvas {
     display: inline;
     border: 1px solid black;

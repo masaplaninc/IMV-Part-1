@@ -14,18 +14,12 @@ var pMatrix = mat4.create();
 // color array
 // var black = [0.0, 0.0, 0.0, 1.0];
 var red = [1.0, 0.0, 0.2, 1.0];
-var blue = [0.0, 0.2, 1.0, 1.0];
-var green = [0.0, 1.0, 0.2, 1.0];
-var white = [1.0, 1.0, 1.0, 1.0];
-
-var colorArray = [red, blue, green, white];
-var colorIndex = 0;
-var colors = colorArray[colorIndex].concat(colorArray[colorIndex]).concat(colorArray[colorIndex]);
-
+var color = red;
 
 var midiFile;
 
-
+var expectLow = false;
+var expectHigh = false;
 
 //
 // initGL
@@ -186,10 +180,10 @@ function initBuffers() {
     triangleVertexColorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
 
-    colors = colorArray[colorIndex].concat(colorArray[colorIndex]).concat(colorArray[colorIndex]);
+    
 
     // Pass the colors into WebGL
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color.concat(color).concat(color).concat(color)), gl.DYNAMIC_DRAW);
     triangleVertexColorBuffer.itemSize = 4;
     triangleVertexColorBuffer.numItems = 3;
 
@@ -276,21 +270,15 @@ function start() {
 }
 
 function animate() {
-
-	// also bind the buffer again
+	// advice from other student in RGTI class:
+	// should also bind the buffer again
 	// to prevent weird errors
-    colors = colorArray[colorIndex].concat(colorArray[colorIndex]).concat(colorArray[colorIndex]);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_DRAW);
-
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color.concat(color).concat(color).concat(color)), gl.DYNAMIC_DRAW);
 }
 
 function checkPressedKey(e) {
-    colorIndex = (colorIndex + 1) % colorArray.length;
-    
-    console.log(colorIndex);
+    color = [Math.random(), Math.random(), Math.random(), 1.0];
 }
-
-
 
 $(function() {
     /*
@@ -307,8 +295,13 @@ $(function() {
         }
     });
 
-
-    // initWebGL();
-
     loadPlugin();
 });
+
+function lowNote() {
+    expectLow = true;
+}
+
+function highNote() {
+    expectHigh = true;
+}

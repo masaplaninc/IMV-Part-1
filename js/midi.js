@@ -2,8 +2,8 @@ const NOTE_OFF = 128;
 const NOTE_ON = 144;
 
 var channelsInstruments = null;
-var minNote = 0;
-var maxNote = 127;
+var minNote = 48;
+var maxNote = 62;
 
 // Handling MIDI file
 var midiFile;

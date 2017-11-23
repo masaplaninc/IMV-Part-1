@@ -1,6 +1,6 @@
 const SCALE = 1;
 const MAX_DIST = 100;
-const MAX_POS = 5;
+const MAX_POS = 7;
 const SPEED_BALLS = 0.01;
 const OFFSET_START = 3
 
@@ -668,4 +668,7 @@ window.onload = function () {
         'spikeFrame': 'assets/spicaokvir.obj',
         'spikeFaces': 'assets/spicaploskve.obj',
     }, start);
+
+    document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
+    document.getElementById("midiLow").innerHTML = "min = " + minNote;
 };

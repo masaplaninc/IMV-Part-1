@@ -29,58 +29,28 @@
     <script src="js/core.js" type="text/javascript"></script>
     
     <!-- SKYBOX -->
-    <script id="shader-vs-skybox" type="x-shader/x-vertex">
-        attribute vec3 aVertexPosition;
-
-        uniform mat4 uMVMatrix; // model-view matrix
-        uniform mat4 uPMatrix;  // projection matrix
-
-        varying vec3 vColor;
-
-        void main(void) {
-            vColor = aVertexPosition;
-            gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-        }
-    </script>
-
-    <script id="shader-fs-skybox" type="x-shader/x-fragment">
-        precision mediump float;
-        varying vec3 vColor;
-
-        void main(void) {
-            gl_FragColor = vec4(vColor, 1.0);
-        }
-    </script>
-
-
-
     <script id="skyboxVertexShader" type="x-shader/x-vertex">
-    uniform mat4 projection;
-     uniform mat4 modelview;
-     attribute vec3 coords;
-     varying vec3 vCoords;
+        uniform mat4 projection;
+        uniform mat4 modelview;
+        attribute vec3 coords;
+        varying vec3 vCoords;
 
-     void main() {
-        vec4 eyeCoords = modelview * vec4(coords,1.0);
-        gl_Position = projection * eyeCoords;
-        vCoords = coords;//gl_Position.xyz;
-     }
-
+        void main() {
+            vec4 eyeCoords = modelview * vec4(coords,1.0);
+            gl_Position = projection * eyeCoords;
+            vCoords = coords;//gl_Position.xyz;
+        }
     </script>
 
     <script id="skyboxFragmentShader" type="x-shader/x-fragment">
-    precision mediump float;
-     varying vec3 vCoords;
-     uniform samplerCube skybox;
-     void main() {
-          gl_FragColor = textureCube(skybox, vCoords);
-          //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-     }
+        precision mediump float;
+        varying vec3 vCoords;
+        uniform samplerCube skybox;
 
+        void main() {
+            gl_FragColor = textureCube(skybox, vCoords);
+        }
     </script>
-
-
-
 
     <!-- TUNNEL -->
     <script id="tunnel-shader-vs" type="x-shader/x-vertex">

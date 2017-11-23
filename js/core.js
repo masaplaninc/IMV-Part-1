@@ -321,3 +321,68 @@ function highNote() {
     expectHigh = true;
     document.getElementById("midiHigh").className = "expectMIDI";
 }
+
+function mapKey(event) {
+    var note = 0;
+    switch(event.code) {
+    case "KeyA":
+        note = 48; // C3
+        break;
+    case "KeyW":
+        note = 49; // C#3
+        break;
+    case "KeyS":
+        note = 50; // D3
+        break;
+    case "KeyE":
+        note = 51; // D#3
+        break;
+    case "KeyD":
+        note = 52; // E3
+        break;
+    case "KeyF":
+        note = 53; // F3
+        break;
+    case "KeyT":
+        note = 54; // F#3
+        break;
+    case "KeyG":
+        note = 55; // G3
+        break;
+    case "KeyY":
+        note = 56; // G#3
+        break;
+    case "KeyH":
+        note = 57; // A3
+        break;
+    case "KeyU":
+        note = 58; // A#3
+        break;
+    case "KeyJ":
+        note = 59; // B3
+        break;
+    case "KeyK":
+        note = 60; // C4
+        break;
+    case "KeyO":
+        note = 61; // C#4
+        break;
+    case "KeyL":
+        note = 62; // D4
+        break;
+    default:
+        break;
+    }
+
+    if (note) {
+        if (expectLow) {
+            mapLow(note);
+        }
+        else if (expectHigh) {
+            mapHigh(note);
+        }
+        else {
+            addBall(note, 63);
+        }
+    }
+}

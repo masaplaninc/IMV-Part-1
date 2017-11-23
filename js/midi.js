@@ -104,22 +104,29 @@ function getChannel(msg) {
   return msg & 0b00001111;
 }
 
+function mapLow(note) {
+  minNote = note;
+  document.getElementById("midiLow").innerHTML = "min = " + minNote;
+  document.getElementById("midiLow").className = "noMIDI";
+  expectLow = false;
+}
+
+function mapHigh(note) {
+  maxNote = note;
+  document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
+  document.getElementById("midiHigh").className = "noMIDI";
+  expectHigh = false;
+}
+
 function onMIDIMessage(message) {
- data = message.data;
-  // console.log('MIDI data', data);
+  data = message.data;
 
   if (getStatus(data[0]) == NOTE_ON) {
     if (expectLow) {
-      minNote = data[1];
-      document.getElementById("midiLow").innerHTML = "min = " + minNote;
-      document.getElementById("midiLow").className = "noMIDI";
-      expectLow = false;
+      mapLow(data[1]);
     }
     else if (expectHigh) {
-      maxNote = data[1];
-      document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
-      document.getElementById("midiHigh").className = "noMIDI";
-      expectHigh = false;
+      mapHigh(data[1]);
     }
     else {
       addBall(data[1], data[2]);

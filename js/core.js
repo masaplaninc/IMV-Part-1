@@ -19,6 +19,38 @@ var skyboxShaderProgram;
 var skyboxVertexBuffer;
 var skyboxIndexBuffer;
 
+// skybox variables and functions
+
+var skyboxShaderProgram2;
+g_drawOnce = true;
+g_debug = true;
+
+var rotator;   // A SimpleRotator object to enable rotation by mouse dragging.
+
+var texID;
+var cube;
+var g_skyBoxUrls = [
+    'images/Rightpx.png',
+    'images/Leftnx.png',
+    'images/Uppy.png',
+    'images/Downny.png',
+    'images/Backpz.png',
+    'images/Frontnz.png'
+];
+
+// extend vec3 for debugging
+vec3.toString = function (v) {
+    return v[0] + ', ' + v[1] + ', ' + v[2];
+};
+
+vec3.divideByScalar = function (out, a, scalar) {
+    out[0] = a[0] / scalar;
+    out[1] = a[1] / scalar;
+    out[2] = a[2] / scalar;
+    return out;
+};
+
+
 // ballls
 var ballsShaderProgram;
 var bannerVertexBuffer;
@@ -45,7 +77,7 @@ var endZposition = startZposition + tunnelLen;
 var Zposition = startZposition;
 
 // Variable that stores  loading state of textures.
-var numberOfTextures = 1;
+var numberOfTextures = 6;
 var texturesLoaded = 0;
 
 //
@@ -169,7 +201,7 @@ function createShaderProgram(vsName, fsName) {
 
 function initSkyboxShader() {
     skyboxShaderProgram = createShaderProgram("shader-vs-skybox", "shader-fs-skybox");
-    
+
     gl.useProgram(skyboxShaderProgram);
 
     skyboxShaderProgram.vertexPositionAttribute = gl.getAttribLocation(skyboxShaderProgram, "aVertexPosition");
@@ -177,6 +209,11 @@ function initSkyboxShader() {
 
     skyboxShaderProgram.pMatrixUniform = gl.getUniformLocation(skyboxShaderProgram, "uPMatrix");
     skyboxShaderProgram.mvMatrixUniform = gl.getUniformLocation(skyboxShaderProgram, "uMVMatrix");
+}
+
+function initSkyboxShader2() {
+    skyboxShaderProgram2 = createShaderProgram("skyboxVertexShader", "skyboxFragmentShader");
+    gl.useProgram(skyboxShaderProgram2);
 }
 
 function initBallsShader() {
@@ -221,6 +258,9 @@ function initTunnelShader() {
 
 function initShaders() {
     initSkyboxShader();
+
+    initSkyboxShader2();
+
     initBallsShader();
     initTunnelShader();
 }
@@ -248,7 +288,7 @@ function setTunnelUniforms() {
     gl.uniform1i(tunnelShaderProgram.useTexturesUniform, texture != "none"); // ???
 
     gl.uniform1i(tunnelShaderProgram.samplerUniform, 0); // this could cause trouble if the sampler wasnt at 0
- 
+
     gl.uniformMatrix4fv(tunnelShaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(tunnelShaderProgram.mvMatrixUniform, false, mvMatrix);
 
@@ -268,13 +308,13 @@ function initBuffers() {
     // skybox
     var skyboxVertices = [
         -1.0, -1.0, -1.0,
-        -1.0, -1.0,  1.0,
-        -1.0,  1.0, -1.0,
-        -1.0,  1.0,  1.0,
-         1.0, -1.0, -1.0,
-         1.0, -1.0,  1.0,
-         1.0,  1.0, -1.0,
-         1.0,  1.0,  1.0
+        -1.0, -1.0, 1.0,
+        -1.0, 1.0, -1.0,
+        -1.0, 1.0, 1.0,
+        1.0, -1.0, -1.0,
+        1.0, -1.0, 1.0,
+        1.0, 1.0, -1.0,
+        1.0, 1.0, 1.0
     ];
 
     skyboxVertexBuffer = gl.createBuffer();
@@ -285,12 +325,12 @@ function initBuffers() {
     skyboxVertexBuffer.numItems = 8;
 
     var skyboxIndices = [
-        0, 2, 4,   4, 2, 6, // back face
-        0, 1, 2,   2, 1, 3, // left face
-        1, 5, 3,   3, 5, 7, // front face
-        5, 4, 7,   7, 4, 6, // right face
-        3, 7, 2,   2, 7, 6, // upper face
-        0, 4, 1,   1, 4, 5, // lower face
+        0, 2, 4, 4, 2, 6, // back face
+        0, 1, 2, 2, 1, 3, // left face
+        1, 5, 3, 3, 5, 7, // front face
+        5, 4, 7, 7, 4, 6, // right face
+        3, 7, 2, 2, 7, 6, // upper face
+        0, 4, 1, 1, 4, 5, // lower face
     ];
 
     skyboxIndexBuffer = gl.createBuffer();
@@ -300,12 +340,27 @@ function initBuffers() {
     skyboxIndexBuffer.itemSize = 3;
     skyboxIndexBuffer.numItems = 12;
 
+
+    // skybox 2
+
+    aCoords = gl.getAttribLocation(skyboxShaderProgram2, "coords");
+    uModelview = gl.getUniformLocation(skyboxShaderProgram2, "modelview");
+    uProjection = gl.getUniformLocation(skyboxShaderProgram2, "projection");
+
+    gl.enableVertexAttribArray(aCoords);
+    gl.enable(gl.DEPTH_TEST);
+
+    rotator = new SimpleRotator(canvas, drawScene);
+    rotator.setView([0, 0, 1], [0, 1, 0], 0);
+    cube = createModel(cube(120));
+
+
     // balls
     var bannerVertices = [
-        -1.0,  1.0,
+        -1.0, 1.0,
         -1.0, -1.0,
-         1.0,  1.0,
-         1.0, -1.0
+        1.0, 1.0,
+        1.0, -1.0
     ];
 
     bannerVertexBuffer = gl.createBuffer();
@@ -314,6 +369,74 @@ function initBuffers() {
     bannerVertexBuffer.itemSize = 2;
     bannerVertexBuffer.numItems = 4;
 }
+
+
+function loadTextureCube(urls) {
+    var ct = 0;
+    var img = new Array(6);
+
+    for (var i = 0; i < 6; i++) {
+        img[i] = new Image();
+        img[i].onload = function () {
+            ct++;
+            texturesLoaded++;
+            if (ct == 6) {
+                texID = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_CUBE_MAP, texID);
+
+                var targets = [
+                    gl.TEXTURE_CUBE_MAP_POSITIVE_X, gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+                    gl.TEXTURE_CUBE_MAP_POSITIVE_Y, gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+                    gl.TEXTURE_CUBE_MAP_POSITIVE_Z, gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+                ];
+
+                for (var j = 0; j < 6; j++) {
+                    gl.texImage2D(targets[j], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img[j]);
+                    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                }
+                gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+                // drawScene();
+            }
+        };
+        img[i].src = urls[i];
+    }
+}
+
+function createModel(modelData) {
+    var model = {};
+
+    model.coordsBuffer = gl.createBuffer();
+    model.indexBuffer = gl.createBuffer();
+    model.count = modelData.indices.length;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, model.coordsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, modelData.vertexPositions, gl.STATIC_DRAW);
+
+    // console.log(modelData.vertexPositions.length);
+    // console.log(modelData.indices.length);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, modelData.indices, gl.STATIC_DRAW);
+
+    model.render = function () {
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.coordsBuffer);
+        gl.vertexAttribPointer(aCoords, 3, gl.FLOAT, false, 0, 0);
+        gl.uniformMatrix4fv(uModelview, false, mvMatrix);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
+        // console.log(this.count);
+    }
+    return model;
+}
+
+/**
+ * Sets up the Skybox
+ */
+function setupSkybox() {
+    loadTextureCube(g_skyBoxUrls);
+}
+
 
 function drawTunnelObject(object) {
     setTunnelUniforms();
@@ -340,6 +463,16 @@ function drawScene() {
     mat4.identity(mvMatrix);
     // mat4.translate(mvMatrix, CAMERA_POSITION);
 
+    // skybox 2
+    gl.useProgram(skyboxShaderProgram2);
+    gl.uniformMatrix4fv(uProjection, false, pMatrix);
+
+    mvMatrix = rotator.getViewMatrix();
+
+    if (texID)
+        cube.render();
+
+
     // tunnel
     mat4.identity(mvMatrix);
     mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
@@ -356,7 +489,7 @@ function drawScene() {
 
         drawTunnelObject(app.meshes.gridFaces);
 
-        mvPopMatrix();   
+        mvPopMatrix();
     }
 
 
@@ -378,7 +511,7 @@ function drawScene() {
     drawTunnelObject(app.meshes.spikeFrame);
 
     mvPopMatrix();
-    
+
     // skybox
     mat4.identity(mvMatrix);
     mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
@@ -395,10 +528,12 @@ function drawScene() {
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
     gl.vertexAttribPointer(ballsShaderProgram.vertexPositionAttribute, bannerVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    for (var i=0; i<balls.length; i++) {
-        setBallUniforms(balls[i].position, balls[i].scale);        
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems); 
-    }    
+    for (var i = 0; i < balls.length; i++) {
+        setBallUniforms(balls[i].position, balls[i].scale);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems);
+    }
+
+
 }
 
 function start(meshes) {
@@ -430,12 +565,16 @@ function start(meshes) {
     // skybox & balls
     initBuffers();
 
+    setupSkybox();
+
+
     setInterval(function () {
-        //if (texturesLoaded == numberOfTextures) { // only draw scene and animate when textures are loaded.
-        requestAnimationFrame(animate);
-        drawScene();
-        //}
+        if (texturesLoaded == numberOfTextures) { // only draw scene and animate when textures are loaded.
+            requestAnimationFrame(animate);
+            drawScene();
+        }
     }, 15);
+
 
 }
 
@@ -453,7 +592,7 @@ function animate() {
 
         Zposition += elapsed * SPEED_CAM;
 
-        for (var i=0; i<balls.length; i++) {
+        for (var i = 0; i < balls.length; i++) {
             // remove the ball if too far
             if (balls[i].position[2] - camera[2] > MAX_DIST - 2 * balls.length) {
                 balls.splice(i, 1);
@@ -462,7 +601,7 @@ function animate() {
             else {
                 balls[i].position[2] += elapsed * SPEED_BALLS;
             }
-        } 
+        }
     }
     lastTime = timeNow;
 
@@ -503,54 +642,54 @@ function highNote() {
 
 function mapKey(event) {
     var note = 0;
-    switch(event.code) {
-    case "KeyA":
-        note = 48; // C3
-        break;
-    case "KeyW":
-        note = 49; // C#3
-        break;
-    case "KeyS":
-        note = 50; // D3
-        break;
-    case "KeyE":
-        note = 51; // D#3
-        break;
-    case "KeyD":
-        note = 52; // E3
-        break;
-    case "KeyF":
-        note = 53; // F3
-        break;
-    case "KeyT":
-        note = 54; // F#3
-        break;
-    case "KeyG":
-        note = 55; // G3
-        break;
-    case "KeyY":
-        note = 56; // G#3
-        break;
-    case "KeyH":
-        note = 57; // A3
-        break;
-    case "KeyU":
-        note = 58; // A#3
-        break;
-    case "KeyJ":
-        note = 59; // B3
-        break;
-    case "KeyK":
-        note = 60; // C4
-        break;
-    case "KeyO":
-        note = 61; // C#4
-        break;
-    case "KeyL":
-        note = 62; // D4
-        break;
-    default:
-        break;
+    switch (event.code) {
+        case "KeyA":
+            note = 48; // C3
+            break;
+        case "KeyW":
+            note = 49; // C#3
+            break;
+        case "KeyS":
+            note = 50; // D3
+            break;
+        case "KeyE":
+            note = 51; // D#3
+            break;
+        case "KeyD":
+            note = 52; // E3
+            break;
+        case "KeyF":
+            note = 53; // F3
+            break;
+        case "KeyT":
+            note = 54; // F#3
+            break;
+        case "KeyG":
+            note = 55; // G3
+            break;
+        case "KeyY":
+            note = 56; // G#3
+            break;
+        case "KeyH":
+            note = 57; // A3
+            break;
+        case "KeyU":
+            note = 58; // A#3
+            break;
+        case "KeyJ":
+            note = 59; // B3
+            break;
+        case "KeyK":
+            note = 60; // C4
+            break;
+        case "KeyO":
+            note = 61; // C#4
+            break;
+        case "KeyL":
+            note = 62; // D4
+            break;
+        default:
+            break;
     }
 
     if (note) {

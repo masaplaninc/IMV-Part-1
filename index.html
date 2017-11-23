@@ -5,6 +5,10 @@
     <script src="lib/glMatrix-0.9.5.min.js"></script>
     <script type='text/javascript' src='./lib/webgl-obj-loader.js'></script>
 
+    <!-- for skybox -->
+    <script type="text/javascript" src="./js/webgl-utils.js"></script>
+    <script type="text/javascript" src="./js/simple-rotator.js"></script>
+    <script type="text/javascript" src="./js/basic-objects-IFS.js"></script>
 
     <!-- jquery -->
     <script src="./lib/jquery.js"></script>
@@ -19,8 +23,6 @@
 
     <script src="./lib/midi/inc/Base64.js"></script>
     <script src="./lib/midi/inc/base64binary.js"></script>
-
-
 
     <!-- Own sources -->
     <script src="./js/midi.js"></script>
@@ -49,6 +51,36 @@
             gl_FragColor = vec4(vColor, 1.0);
         }
     </script>
+
+
+
+    <script id="skyboxVertexShader" type="x-shader/x-vertex">
+    uniform mat4 projection;
+     uniform mat4 modelview;
+     attribute vec3 coords;
+     varying vec3 vCoords;
+
+     void main() {
+        vec4 eyeCoords = modelview * vec4(coords,1.0);
+        gl_Position = projection * eyeCoords;
+        vCoords = coords;//gl_Position.xyz;
+     }
+
+    </script>
+
+    <script id="skyboxFragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+     varying vec3 vCoords;
+     uniform samplerCube skybox;
+     void main() {
+          gl_FragColor = textureCube(skybox, vCoords);
+          //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+     }
+
+    </script>
+
+
+
 
     <!-- TUNNEL -->
     <script id="tunnel-shader-vs" type="x-shader/x-vertex">

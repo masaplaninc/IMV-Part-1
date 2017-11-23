@@ -30,12 +30,12 @@ var rotator;   // A SimpleRotator object to enable rotation by mouse dragging.
 var texID;
 var cube;
 var g_skyBoxUrls = [
-    'images/Rightpx.png',
-    'images/Leftnx.png',
-    'images/Uppy.png',
-    'images/Downny.png',
-    'images/Backpz.png',
-    'images/Frontnz.png'
+    'images/Rightpx.jpg',
+    'images/Leftnx.jpg',
+    'images/Uppy.jpg',
+    'images/Downny.jpg',
+    'images/Backpz.jpg',
+    'images/Frontnz.jpg'
 ];
 
 // extend vec3 for debugging
@@ -370,7 +370,6 @@ function initBuffers() {
     bannerVertexBuffer.numItems = 4;
 }
 
-
 function loadTextureCube(urls) {
     var ct = 0;
     var img = new Array(6);
@@ -394,9 +393,10 @@ function loadTextureCube(urls) {
                     gl.texImage2D(targets[j], 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img[j]);
                     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 }
-                gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-                // drawScene();
+                // gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
             }
         };
         img[i].src = urls[i];
@@ -461,7 +461,6 @@ function drawScene() {
 
     mat4.perspective(70, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
     mat4.identity(mvMatrix);
-    // mat4.translate(mvMatrix, CAMERA_POSITION);
 
     // skybox 2
     gl.useProgram(skyboxShaderProgram2);
@@ -469,9 +468,9 @@ function drawScene() {
 
     mvMatrix = rotator.getViewMatrix();
 
-    if (texID)
+    if (texID) {
         cube.render();
-
+    }
 
     // tunnel
     mat4.identity(mvMatrix);

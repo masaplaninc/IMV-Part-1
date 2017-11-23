@@ -3,6 +3,8 @@
     <link rel="stylesheet" href="css/style.css">
 
     <script src="lib/glMatrix-0.9.5.min.js"></script>
+    <script type='text/javascript' src='./lib/webgl-obj-loader.js'></script>
+
 
     <!-- jquery -->
     <script src="./lib/jquery.js"></script>
@@ -41,12 +43,73 @@
 
     <script id="shader-fs-skybox" type="x-shader/x-fragment">
         precision mediump float;
-
         varying vec3 vColor;
-
         void main(void) {
             gl_FragColor = vec4(vColor, 1.0);
         }
+    </script>
+
+    <!-- TUNNEL -->
+    <script id="tunnel-shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
+        attribute vec3 aVertexNormal;
+        attribute vec2 aTextureCoord;
+
+        uniform mat4 uMVMatrix; // model-view matrix
+        uniform mat4 uPMatrix;  // projection matrix
+        uniform mat3 uNMatrix;  // normal matrix
+
+        varying vec2 vTextureCoord;
+        varying vec3 vTransformedNormal;
+        varying vec4 vPosition;
+
+        void main(void) {
+            vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+            gl_Position = uPMatrix * vPosition;
+            vTextureCoord = aTextureCoord;
+            vTransformedNormal = uNMatrix * aVertexNormal;
+        }
+    </script>
+
+    <script id="tunnel-shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec2 vTextureCoord;
+        varying vec3 vTransformedNormal;
+        varying vec4 vPosition;
+
+        uniform float uMaterialShininess;
+
+        uniform vec3 uAmbientColor;
+
+        uniform vec3 uPointLightingLocation;            // light direction uniform
+        uniform vec3 uPointLightingSpecularColor;       // specular light color
+        uniform vec3 uPointLightingDiffuseColor;        // difuse light color
+
+        uniform sampler2D uSampler;
+
+        void main(void) {
+            vec3 lightWeighting;
+
+            vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+            vec3 normal = normalize(vTransformedNormal);
+
+            // Specular component
+            float specularLightWeighting = 0.0;
+            vec3 eyeDirection = normalize(-vPosition.xyz);
+            vec3 reflectionDirection = reflect(-lightDirection, normal);
+            specularLightWeighting = pow(max(dot(reflectionDirection, eyeDirection), 0.0), uMaterialShininess);
+
+            // diffuese component
+            float diffuseLightWeighting = max(dot(normal, lightDirection), 0.0);
+            lightWeighting = uAmbientColor
+                + uPointLightingSpecularColor * specularLightWeighting
+                + uPointLightingDiffuseColor * diffuseLightWeighting;
+
+            vec4 fragmentColor = vec4(1.0);
+
+            gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+            }
     </script>
 
     <!-- BALLS -->
@@ -212,19 +275,19 @@
 
 </head>
 
-<body onload="start()" onkeypress="mapKey(event)">
+    <body onkeypress="mapKey(event)">
 
-<span>
-    Load MIDI file:
-    <input type="file" id="file_upload"/>
-</span>
+    <span>
+        Load MIDI file:
+        <input type="file" id="file_upload"/>
+    </span>
 
-<button onclick="lowNote()">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
-<button onclick="highNote()">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
+    <button onclick="lowNote()">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
+    <button onclick="highNote()">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
 
-<!-- <canvas id="glcanvas" width="1280px" height="720px"> -->
-<canvas id="glcanvas" width="1024px" height="576px">
-    No <code>&lt;canvas&gt;</code> suppport in your browser.
-</canvas>
+    <!-- <canvas id="glcanvas" width="1280px" height="720px"> -->
+    <canvas id="glcanvas" width="1024px" height="576px">
+        No <code>&lt;canvas&gt;</code> suppport in your browser.
+    </canvas>
 
 </body>

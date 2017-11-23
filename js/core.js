@@ -2,7 +2,9 @@ const SCALE = 1;
 const MAX_DIST = 100;
 const MAX_POS = 7;
 const SPEED_BALLS = 0.01;
-const OFFSET_START = 3
+const SPEED_CAM = 0.0025;
+const OFFSET_START = 5;
+const N_TUNNELS = 4;
 
 var canvas;
 var gl;
@@ -38,7 +40,7 @@ app.meshes = {};
 // coordinates for view through tunnel
 var startXposition = 2.23, startYposition = -3.6;
 var startZposition = -10;
-var tunnelLen = 12;
+var tunnelLen = 13.6;
 var endZposition = startZposition + tunnelLen;
 var Zposition = startZposition;
 
@@ -70,12 +72,6 @@ function degToRad(degrees) {
     return degrees * Math.PI / 180;
 }
 
-//
-// initGL
-//
-// Initialize WebGL, returning the GL context or null if
-// WebGL isn't available or could not be initialized.
-//
 function initGL(canvas) {
     var gl = null;
     try {
@@ -158,7 +154,6 @@ function createShaderProgram(vsName, fsName) {
     var vertexShader = getShader(gl, vsName);
     var fragmentShader = getShader(gl, fsName);
 
-    // Create the shader program
     var shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
@@ -246,7 +241,14 @@ function setBallUniforms(position, scale) {
     gl.uniform1f(ballsShaderProgram.scaleUniform, scale);
 }
 
-function setTunnelMatrixUniforms() {
+function setTunnelUniforms() {
+    gl.useProgram(tunnelShaderProgram);
+
+    var texture = "gridTexture";
+    gl.uniform1i(tunnelShaderProgram.useTexturesUniform, texture != "none"); // ???
+
+    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0); // this could cause trouble if the sampler wasnt at 0
+ 
     gl.uniformMatrix4fv(tunnelShaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(tunnelShaderProgram.mvMatrixUniform, false, mvMatrix);
 
@@ -254,6 +256,12 @@ function setTunnelMatrixUniforms() {
     mat4.toInverseMat3(mvMatrix, normalMatrix);
     mat3.transpose(normalMatrix);
     gl.uniformMatrix3fv(tunnelShaderProgram.nMatrixUniform, false, normalMatrix);
+
+    gl.uniform3f(tunnelShaderProgram.ambientColorUniform, 0.2, 0.2, 0.2);
+    gl.uniform3f(tunnelShaderProgram.pointLightingLocationUniform, -10, 4, -20);
+    gl.uniform3f(tunnelShaderProgram.pointLightingSpecularColorUniform, 0.8, 0.8, 0.8);
+    gl.uniform3f(tunnelShaderProgram.pointLightingDiffuseColorUniform, 0.8, 0.8, 0.8);
+    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, 10);
 }
 
 function initBuffers() {
@@ -308,7 +316,7 @@ function initBuffers() {
 }
 
 function drawTunnelObject(object) {
-    gl.useProgram(tunnelShaderProgram);
+    setTunnelUniforms();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
     gl.vertexAttribPointer(tunnelShaderProgram.vertexPositionAttribute, object.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -319,7 +327,7 @@ function drawTunnelObject(object) {
 
     // Set the index for the vertices.
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer);
-    setTunnelMatrixUniforms();
+    setTunnelUniforms();
 
     gl.drawElements(gl.TRIANGLES, object.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
@@ -328,133 +336,29 @@ function drawScene() {
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+    mat4.perspective(70, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
     mat4.identity(mvMatrix);
     // mat4.translate(mvMatrix, CAMERA_POSITION);
 
     // tunnel
-       gl.useProgram(tunnelShaderProgram);
-
-    gl.uniform3f(
-        tunnelShaderProgram.ambientColorUniform,
-        parseFloat(0.2),
-        parseFloat(0.2),
-        parseFloat(0.2)
-    );
-
-    gl.uniform3f(
-        tunnelShaderProgram.pointLightingLocationUniform,
-        parseFloat(-10),
-        parseFloat(4),
-        parseFloat(-20)
-    );
-
-    gl.uniform3f(
-        tunnelShaderProgram.pointLightingSpecularColorUniform,
-        parseFloat(0.8),
-        parseFloat(0.8),
-        parseFloat(0.8)
-    );
-
-    gl.uniform3f(
-        tunnelShaderProgram.pointLightingDiffuseColorUniform,
-        parseFloat(0.8),
-        parseFloat(0.8),
-        parseFloat(0.8)
-    );
-
-
-    // Textures
-    var texture = "gridTexture";
-
-    // set uniform to the value of the checkbox.
-    gl.uniform1i(tunnelShaderProgram.useTexturesUniform, texture != "none");
-
-    // Set the drawing position to the "identity" point, which is
-    // the center of the scene.
     mat4.identity(mvMatrix);
-
-    // Now move the drawing position a bit to where we want to start
-    // drawing the world.
-
-
     mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
-
 
     if (Zposition >= endZposition - 10) {
         startZposition = endZposition;
         endZposition += tunnelLen;
     }
 
-    // fIRST tunnel - where we start
-    mvPushMatrix();
+    for (var i = 0; i < N_TUNNELS; i++) {
+        mvPushMatrix();
+        mat4.translate(mvMatrix, [0, 0, -startZposition - i * tunnelLen]);
+        mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
 
-    mat4.translate(mvMatrix, [0, 0, -startZposition]);
+        drawTunnelObject(app.meshes.gridFaces);
 
-    mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
-    // Activate textures
-    // NO TEXTURES YET
-    /*
-     gl.activeTexture(gl.TEXTURE0);
-     gl.bindTexture(gl.TEXTURE_2D, gridTexture);
-     */
+        mvPopMatrix();   
+    }
 
-    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
-
-    // Activate shininess
-    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
-
-    // drawTunnelObject(app.meshes.gridFrame); // problems
-    drawTunnelObject(app.meshes.gridFaces);
-
-    mvPopMatrix();
-
-
-    // second tunnel
-    mvPushMatrix();
-
-    mat4.translate(mvMatrix, [0, 0, -endZposition]);
-
-    mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
-    // Activate textures
-    // NO TEXTURES YET
-    /*
-     gl.activeTexture(gl.TEXTURE0);
-     gl.bindTexture(gl.TEXTURE_2D, gridTexture);
-     */
-
-    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
-
-    // Activate shininess
-    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
-
-    // drawTunnelObject(app.meshes.gridFrame); // problems
-    drawTunnelObject(app.meshes.gridFaces);
-
-    mvPopMatrix();
-
-    // third tunnel
-    mvPushMatrix();
-
-    mat4.translate(mvMatrix, [0, 0, -endZposition - tunnelLen]);
-
-    mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
-    // Activate textures
-    // NO TEXTURES YET
-    /*
-     gl.activeTexture(gl.TEXTURE0);
-     gl.bindTexture(gl.TEXTURE_2D, gridTexture);
-     */
-
-    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
-
-    // Activate shininess
-    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
-
-    // drawTunnelObject(app.meshes.gridFrame); // problems
-    drawTunnelObject(app.meshes.gridFaces);
-
-    mvPopMatrix();
 
     // Two spikes
 
@@ -476,6 +380,8 @@ function drawScene() {
     mvPopMatrix();
     
     // skybox
+    mat4.identity(mvMatrix);
+    mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
     setSkyboxUniforms();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexBuffer);
@@ -545,7 +451,7 @@ function animate() {
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
 
-        Zposition += 0.05; // change Z coordinate to move through the tunnel
+        Zposition += elapsed * SPEED_CAM;
 
         for (var i=0; i<balls.length; i++) {
             // remove the ball if too far

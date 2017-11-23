@@ -1,4 +1,6 @@
-const SCALE = 1;
+const SCALE_BALLS = 1;
+const SCALE_TUNNEL = 13.6;
+const SCALE_SPIKES = 1;
 const MAX_DIST = 100;
 const MAX_POS = 7;
 const SPEED_BALLS = 0.01;
@@ -63,13 +65,12 @@ var app = {};
 app.meshes = {};
 
 // coordinates for view through tunnel
-var startXposition = 2.23, startYposition = -3.6;
-var startZposition = -10;
-var tunnelLen = 13.6;
-var endZposition = startZposition + tunnelLen;
+var startXposition = 0, startYposition = 0;
+var startZposition = 0;
+var endZposition = startZposition + SCALE_TUNNEL;
 var Zposition = startZposition;
 
-// Variable that stores  loading state of textures.
+// Variable that stores loading state of textures.
 var numberOfTextures = 6;
 var texturesLoaded = 0;
 
@@ -408,40 +409,41 @@ function drawScene() {
 
     // tunnel
     mat4.identity(mvMatrix);
-    mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
+    mat4.translate(mvMatrix, [0, 0, Zposition]);
 
-    if (Zposition >= endZposition - 10) {
+    if (Zposition >= endZposition - 5) {
         startZposition = endZposition;
-        endZposition += tunnelLen;
+        endZposition += SCALE_TUNNEL;
     }
 
     for (var i = 0; i < N_TUNNELS; i++) {
         mvPushMatrix();
-        mat4.translate(mvMatrix, [0, 0, -startZposition - i * tunnelLen]);
+        mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
         mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
+        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);        
 
         drawTunnelObject(app.meshes.gridFaces);
 
         mvPopMatrix();
     }
 
-    // Two spikes
+    // spikes
     mvPushMatrix();
-    mat4.translate(mvMatrix, [-startXposition, 0, -2]);
+    mat4.identity(mvMatrix);
+    mat4.translate(mvMatrix, [0, 0, -5]);
+    mat4.scale(mvMatrix, [3, 3, 3], );
 
-    drawTunnelObject(app.meshes.spikeFaces);
-    drawTunnelObject(app.meshes.spikeFrame);
+    // drawTunnelObject(app.meshes.spikeFaces);
+    // drawTunnelObject(app.meshes.spikeFrame);
 
     mvPopMatrix();
 
-    mvPushMatrix();
-    mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
-    mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
+    // mvPushMatrix();
+    // mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
+    // mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
 
-    drawTunnelObject(app.meshes.spikeFaces);
-    drawTunnelObject(app.meshes.spikeFrame);
-
-    mvPopMatrix();
+    // drawTunnelObject(app.meshes.spikeFaces);
+    // drawTunnelObject(app.meshes.spikeFrame);
 
     // balls
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
@@ -494,7 +496,7 @@ function addBall(note, velocity) {
     var x = Math.random() * (2 * MAX_POS) - MAX_POS;
     var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS) - MAX_POS;
     var z = camera[2] + OFFSET_START;
-    balls.push({position: [x, y, z], scale: SCALE * velocity / 127});
+    balls.push({position: [x, y, z], scale: SCALE_BALLS * velocity / 127});
 }
 
 function animate() {

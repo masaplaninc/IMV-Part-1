@@ -278,7 +278,7 @@ function animate() {
     if (lastTime != 0) {
         var elapsed = timeNow - lastTime;
         for (var i=0; i<balls.length; i++) {
-            if (balls[i].position[2] - camera[2] > MAX_DIST) {
+            if (balls[i].position[2] - camera[2] > MAX_DIST - 2 * balls.length) {
                 balls.splice(i, 1);
             }
             else {

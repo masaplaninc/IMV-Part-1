@@ -1,6 +1,6 @@
 var canvas;
 var gl;
-var shaderProgram;
+var tunnelShaderProgram;
 
 // Model-view and projection matrix and model-view matrix stack
 var mvMatrixStack = [];
@@ -115,74 +115,74 @@ function getShader(gl, id) {
 
 
 function initShaders() {
-    var fragmentShader = getShader(gl, "per-fragment-lighting-fs");
-    var vertexShader = getShader(gl, "per-fragment-lighting-vs");
+    var fragmentShader = getShader(gl, "tunnel-shader-fs");
+    var vertexShader = getShader(gl, "tunnel-shader-vs");
 
     // Create the shader program
-    shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
+    tunnelShaderProgram = gl.createProgram();
+    gl.attachShader(tunnelShaderProgram, vertexShader);
+    gl.attachShader(tunnelShaderProgram, fragmentShader);
+    gl.linkProgram(tunnelShaderProgram);
 
     // If creating the shader program failed, alert
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(tunnelShaderProgram, gl.LINK_STATUS)) {
         alert("Unable to initialize the shader program.");
     }
 
     // start using shading program for rendering
-    gl.useProgram(shaderProgram);
+    gl.useProgram(tunnelShaderProgram);
 
     // store location of aVertexPosition variable defined in shader
-    shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+    tunnelShaderProgram.vertexPositionAttribute = gl.getAttribLocation(tunnelShaderProgram, "aVertexPosition");
 
     // turn on vertex position attribute at specified position
-    gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+    gl.enableVertexAttribArray(tunnelShaderProgram.vertexPositionAttribute);
 
     // store location of vertex normals variable defined in shader
-    shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+    tunnelShaderProgram.vertexNormalAttribute = gl.getAttribLocation(tunnelShaderProgram, "aVertexNormal");
 
     // turn on vertex normals attribute at specified position
-    gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+    gl.enableVertexAttribArray(tunnelShaderProgram.vertexNormalAttribute);
 
 
     // store location of texture coordinate variable defined in shader
-    shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+    tunnelShaderProgram.textureCoordAttribute = gl.getAttribLocation(tunnelShaderProgram, "aTextureCoord");
 
     // turn on texture coordinate attribute at specified position
     // NO TEXTURES YET
-    // gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+    // gl.enableVertexAttribArray(tunnelShaderProgram.textureCoordAttribute);
 
     // store location of uPMatrix variable defined in shader - projection matrix
-    shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+    tunnelShaderProgram.pMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uPMatrix");
     // store location of uMVMatrix variable defined in shader - model-view matrix
-    shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+    tunnelShaderProgram.mvMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uMVMatrix");
     // store location of uNMatrix variable defined in shader - normal matrix
-    shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+    tunnelShaderProgram.nMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uNMatrix");
     // store location of uSampler variable defined in shader
-    shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+    tunnelShaderProgram.samplerUniform = gl.getUniformLocation(tunnelShaderProgram, "uSampler");
     // store location of uMaterialShininess variable defined in shader
-    shaderProgram.materialShininessUniform = gl.getUniformLocation(shaderProgram, "uMaterialShininess");
+    tunnelShaderProgram.materialShininessUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialShininess");
 
     // store location of uShowSpecularHighlights variable defined in shader
-    shaderProgram.showSpecularHighlightsUniform = gl.getUniformLocation(shaderProgram, "uShowSpecularHighlights");
+    tunnelShaderProgram.showSpecularHighlightsUniform = gl.getUniformLocation(tunnelShaderProgram, "uShowSpecularHighlights");
 
     // store location of uUseTextures variable defined in shader
-    shaderProgram.useTexturesUniform = gl.getUniformLocation(shaderProgram, "uUseTextures");
+    tunnelShaderProgram.useTexturesUniform = gl.getUniformLocation(tunnelShaderProgram, "uUseTextures");
 
     // store location of uUseLighting variable defined in shader
-    shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
+    tunnelShaderProgram.useLightingUniform = gl.getUniformLocation(tunnelShaderProgram, "uUseLighting");
 
     // store location of uAmbientColor variable defined in shader
-    shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
+    tunnelShaderProgram.ambientColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uAmbientColor");
 
     // store location of uPointLightingLocation variable defined in shader
-    shaderProgram.pointLightingLocationUniform = gl.getUniformLocation(shaderProgram, "uPointLightingLocation");
+    tunnelShaderProgram.pointLightingLocationUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingLocation");
 
     // store location of uPointLightingSpecularColor variable defined in shader
-    shaderProgram.pointLightingSpecularColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingSpecularColor");
+    tunnelShaderProgram.pointLightingSpecularColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingSpecularColor");
 
     // store location of uPointLightingDiffuseColor variable defined in shader
-    shaderProgram.pointLightingDiffuseColorUniform = gl.getUniformLocation(shaderProgram, "uPointLightingDiffuseColor");
+    tunnelShaderProgram.pointLightingDiffuseColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingDiffuseColor");
 
 
 }
@@ -193,13 +193,13 @@ function initShaders() {
 // Set the uniform values in shaders for model-view and projection matrix.
 //
 function setMatrixUniforms() {
-    gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+    gl.uniformMatrix4fv(tunnelShaderProgram.pMatrixUniform, false, pMatrix);
+    gl.uniformMatrix4fv(tunnelShaderProgram.mvMatrixUniform, false, mvMatrix);
 
     var normalMatrix = mat3.create();
     mat4.toInverseMat3(mvMatrix, normalMatrix);
     mat3.transpose(normalMatrix);
-    gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+    gl.uniformMatrix3fv(tunnelShaderProgram.nMatrixUniform, false, normalMatrix);
 }
 
 
@@ -266,10 +266,10 @@ function degToRad(degrees) {
 }
 
 
-function drawObject(object) {
+function drawTunnelObject(object) {
     // Set the vertex positions attribute for the teapot vertices.
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, object.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(tunnelShaderProgram.vertexPositionAttribute, object.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     // Set the texture coordinates attribute for the vertices.
     // NO TEXTURES YET
@@ -277,20 +277,20 @@ function drawObject(object) {
     /*
      if(!object.textures.length){
      // disable, if object has no texture coordinates
-     gl.disableVertexAttribArray(shaderProgram.textureCoordAttribute);
+     gl.disableVertexAttribArray(tunnelShaderProgram.textureCoordAttribute);
      }
      else{
      // if the texture vertexAttribArray has been previously
      // disabled, then it needs to be re-enabled
-     gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+     gl.enableVertexAttribArray(tunnelShaderProgram.textureCoordAttribute);
      gl.bindBuffer(gl.ARRAY_BUFFER, object.textureBuffer);
-     gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, object.textureBuffer.itemSize, gl.FLOAT, false, 0, 0);
+     gl.vertexAttribPointer(tunnelShaderProgram.textureCoordAttribute, object.textureBuffer.itemSize, gl.FLOAT, false, 0, 0);
      }
      */
 
     // Set the normals attribute for the vertices.
     gl.bindBuffer(gl.ARRAY_BUFFER, object.normalBuffer);
-    gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, object.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(tunnelShaderProgram.vertexNormalAttribute, object.normalBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     // Set the index for the vertices.
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer);
@@ -320,28 +320,28 @@ function drawScene() {
 
 
     gl.uniform3f(
-        shaderProgram.ambientColorUniform,
+        tunnelShaderProgram.ambientColorUniform,
         parseFloat(0.2),
         parseFloat(0.2),
         parseFloat(0.2)
     );
 
     gl.uniform3f(
-        shaderProgram.pointLightingLocationUniform,
+        tunnelShaderProgram.pointLightingLocationUniform,
         parseFloat(-10),
         parseFloat(4),
         parseFloat(-20)
     );
 
     gl.uniform3f(
-        shaderProgram.pointLightingSpecularColorUniform,
+        tunnelShaderProgram.pointLightingSpecularColorUniform,
         parseFloat(0.8),
         parseFloat(0.8),
         parseFloat(0.8)
     );
 
     gl.uniform3f(
-        shaderProgram.pointLightingDiffuseColorUniform,
+        tunnelShaderProgram.pointLightingDiffuseColorUniform,
         parseFloat(0.8),
         parseFloat(0.8),
         parseFloat(0.8)
@@ -352,7 +352,7 @@ function drawScene() {
     var texture = "gridTexture";
 
     // set uniform to the value of the checkbox.
-    gl.uniform1i(shaderProgram.useTexturesUniform, texture != "none");
+    gl.uniform1i(tunnelShaderProgram.useTexturesUniform, texture != "none");
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
@@ -383,13 +383,13 @@ function drawScene() {
      gl.bindTexture(gl.TEXTURE_2D, gridTexture);
      */
 
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
+    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
 
     // Activate shininess
-    gl.uniform1f(shaderProgram.materialShininessUniform, true);
+    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
 
-    // drawObject(app.meshes.gridFrame); // problems
-    drawObject(app.meshes.gridFaces);
+    // drawTunnelObject(app.meshes.gridFrame); // problems
+    drawTunnelObject(app.meshes.gridFaces);
 
     mvPopMatrix();
 
@@ -407,20 +407,20 @@ function drawScene() {
      gl.bindTexture(gl.TEXTURE_2D, gridTexture);
      */
 
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
+    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
 
     // Activate shininess
-    gl.uniform1f(shaderProgram.materialShininessUniform, true);
+    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
 
-    // drawObject(app.meshes.gridFrame); // problems
-    drawObject(app.meshes.gridFaces);
+    // drawTunnelObject(app.meshes.gridFrame); // problems
+    drawTunnelObject(app.meshes.gridFaces);
 
     mvPopMatrix();
 
     // third tunnel
     mvPushMatrix();
 
-    mat4.translate(mvMatrix, [0, 0, -endZposition-tunnelLen]);
+    mat4.translate(mvMatrix, [0, 0, -endZposition - tunnelLen]);
 
     mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
     // Activate textures
@@ -430,13 +430,13 @@ function drawScene() {
      gl.bindTexture(gl.TEXTURE_2D, gridTexture);
      */
 
-    gl.uniform1i(shaderProgram.samplerUniform, 0);
+    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0);
 
     // Activate shininess
-    gl.uniform1f(shaderProgram.materialShininessUniform, true);
+    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, true);
 
-    // drawObject(app.meshes.gridFrame); // problems
-    drawObject(app.meshes.gridFaces);
+    // drawTunnelObject(app.meshes.gridFrame); // problems
+    drawTunnelObject(app.meshes.gridFaces);
 
     mvPopMatrix();
 
@@ -446,8 +446,8 @@ function drawScene() {
     mvPushMatrix();
     mat4.translate(mvMatrix, [-startXposition, 0, -2]);
 
-    drawObject(app.meshes.spikeFaces);
-    drawObject(app.meshes.spikeFrame);
+    drawTunnelObject(app.meshes.spikeFaces);
+    drawTunnelObject(app.meshes.spikeFrame);
 
     mvPopMatrix();
 
@@ -456,8 +456,8 @@ function drawScene() {
     mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
     mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
 
-    drawObject(app.meshes.spikeFaces);
-    drawObject(app.meshes.spikeFrame);
+    drawTunnelObject(app.meshes.spikeFaces);
+    drawTunnelObject(app.meshes.spikeFrame);
 
     mvPopMatrix();
 
@@ -548,4 +548,4 @@ window.onload = function () {
         'spikeFrame': 'assets/spicaokvir.obj',
         'spikeFaces': 'assets/spicaploskve.obj',
     }, webGLStart);
-}
+};

@@ -33,7 +33,7 @@
 
 
     <!-- Fragment shader program -->
-    <script id="shader-fs" type="x-shader/x-fragment">
+    <script id="triangle-shader-fs" type="x-shader/x-fragment">
 		    // set medium percision
 		    precision mediump float;
 
@@ -50,7 +50,7 @@
     </script>
 
         <!-- Fragment shader program for tunnel -->
-    <script id="per-fragment-lighting-fs" type="x-shader/x-fragment">
+    <script id="tunnel-shader-fs" type="x-shader/x-fragment">
 
 
         precision mediump float;
@@ -121,7 +121,7 @@
 
 
     <!-- Vertex shader program -->
-    <script id="shader-vs" type="x-shader/x-vertex">
+    <script id="triangle-shader-vs" type="x-shader/x-vertex">
     		// atributes for setting vertex position and color
 		    attribute vec3 aVertexPosition;
 		    attribute vec4 aVertexColor; // barva
@@ -145,7 +145,7 @@
     </script>
 
     <!-- Vertex shader program for tunnel -->
-    <script id="per-fragment-lighting-vs" type="x-shader/x-vertex">
+    <script id="tunnel-shader-vs" type="x-shader/x-vertex">
         // atributes for setting vertex position, normals and texture coordinates
             attribute vec3 aVertexPosition;
             attribute vec3 aVertexNormal;
@@ -174,7 +174,9 @@
 
 </head>
 
-<body onload="start()" onkeypress="checkPressedKey(event)">
+<body onkeypress="checkPressedKey(event)">
+<!-- no more onload="start()" because of window.onload in js -->
+
 
 <span>
     Load MIDI file:

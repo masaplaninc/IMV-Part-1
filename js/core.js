@@ -30,12 +30,12 @@ var skyboxShaderProgram;
 var texID;
 var cube;
 var g_skyBoxUrls = [
-    'images/Rightpx.jpg',
-    'images/Leftnx.jpg',
-    'images/Uppy.jpg',
-    'images/Downny.jpg',
-    'images/Backpz.jpg',
-    'images/Frontnz.jpg'
+    'assets/img/Rightpx.jpg',
+    'assets/img/Leftnx.jpg',
+    'assets/img/Uppy.jpg',
+    'assets/img/Downny.jpg',
+    'assets/img/Backpz.jpg',
+    'assets/img/Frontnz.jpg'
 ];
 
 // balls

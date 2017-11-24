@@ -7,7 +7,7 @@ const MAX_POS_SPIKES = 1;
 const SPEED_BALLS = 0.01;
 const SPEED_CAM = 0.00125;
 const SPEED_ROTATION = 0.00005;
-const SPEED_FREQUENCY = 0.1;
+const SPEED_FREQUENCY = 0.005;
 const OFFSET_START = 5;
 const N_TUNNELS = 4;
 const SPIKES_PER_TUNEL = 10;
@@ -199,7 +199,7 @@ function initTunnelShader() {
 
     tunnelShaderProgram.materialColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialColor");
     tunnelShaderProgram.materialAlphaUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialAlpha");
-    
+
     tunnelShaderProgram.pointLightingLocationUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingLocation");
     tunnelShaderProgram.ambientColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uAmbientColor");
     tunnelShaderProgram.specularColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uSpecularColor");
@@ -372,8 +372,8 @@ function generateSpikes(remove) {
     for (var i = 0; i < SPIKES_PER_TUNEL; i++) {
         var angle = Math.random() * 2 * Math.PI;
         spikes.push({angle: angle,
-                     position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, Math.random() * SCALE_TUNNEL],
-                     scale: [Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES]});
+            position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, Math.random() * SCALE_TUNNEL],
+            scale: [Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES]});
     }
 }
 
@@ -411,8 +411,8 @@ function drawScene() {
     for (var i = 0; i < N_TUNNELS; i++) {
         mat4.identity(mvMatrix);
         mat4.translate(mvMatrix, [0, 0, Zposition - startZposition - i * SCALE_TUNNEL]);
-        mat4.rotate(mvMatrix, rotation, [0, 0, 1]);    
-        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]); 
+        mat4.rotate(mvMatrix, rotation, [0, 0, 1]);
+        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);
 
         drawObject(app.meshes.gridFaces, COLOR_TUNNEL);
     }
@@ -423,7 +423,7 @@ function drawScene() {
             var pos = i * SPIKES_PER_TUNEL + j;
             mat4.identity(mvMatrix);
             mat4.translate(mvMatrix, [spikes[pos].position[0], spikes[pos].position[1], Zposition - startZposition - spikes[pos].position[2] - i * SCALE_TUNNEL]);
-            mat4.rotate(mvMatrix, spikes[pos].angle + 0.5 * Math.PI, [0, 0, 1]);     
+            mat4.rotate(mvMatrix, spikes[pos].angle + 0.5 * Math.PI, [0, 0, 1]);
             mat4.scale(mvMatrix, spikes[pos].scale);
 
             drawObject(app.meshes.spikeFaces, COLOR_TUNNEL);
@@ -476,9 +476,19 @@ function addBall(note, velocity) {
     var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS_SPHERES) - MAX_POS_SPHERES;
     var z = camera[2] + OFFSET_START;
     balls.push({id: note, 
+                off: false,
                 position: [x, y, z],
                 scale: SCALE_BALLS * velocity / 127,
                 frequency: SPEED_FREQUENCY});
+}
+
+function offBall(note) {
+    for (var i = balls.length - 1; i >= 0; i--) {
+        if (balls[i].id == note) {
+            balls[i].off = true;
+            break;
+        }
+    }
 }
 
 function animate() {
@@ -502,6 +512,10 @@ function animate() {
             }
             // otherwise move it forward
             else {
+                if (!balls[i].off) {
+                    balls[i].frequency += elapsed * SPEED_FREQUENCY;
+                }
+
                 balls[i].position[2] += elapsed * SPEED_BALLS;
             }
         }
@@ -543,7 +557,14 @@ function highNote() {
     document.getElementById("midiHigh").className = "expectMIDI";
 }
 
-function mapKey(event) {
+var keysPressed = [];
+
+function mapKey(event, down) {
+    var index = keysPressed.indexOf(event.code);
+    if (down && index != -1) {
+        return;
+    }
+
     var note = 0;
     switch (event.code) {
         case "KeyA":
@@ -595,6 +616,13 @@ function mapKey(event) {
             break;
     }
 
+    if (down) {
+        keysPressed.push(event.code);
+    }
+    else {
+        keysPressed.splice(index, 1);
+    }
+
     if (note) {
         if (expectLow) {
             mapLow(note);
@@ -603,7 +631,17 @@ function mapKey(event) {
             mapHigh(note);
         }
         else {
-            addBall(note, 63);
+            if (down) {
+                MIDI.programChange(0, GeneralMidiNumber);
+                MIDI.setVolume(0, 127);
+                MIDI.noteOn(0, note, 127, 0);
+                
+                addBall(note, 63);
+            }
+            else {
+                // MIDI.noteOff(0, note, 0);
+                offBall(note);
+            }
         }
     }
 }
@@ -612,6 +650,7 @@ function mapKey(event) {
 window.onload = function () {
     OBJ.downloadMeshes({
         // 'gridFrame': 'assets/gridokvir.obj',
+        // 'gridFaces': 'assets/gridploskve.obj',
         'gridFaces': 'assets/gridploskve.obj',
         'spikeFrame': 'assets/spicaokvir.obj',
         'spikeFaces': 'assets/spicaploskve.obj',
@@ -624,5 +663,7 @@ window.onload = function () {
         generateSpikes(false);
     }
 
-    document.getElementById("midiFail").innerHTML = "External MIDI input is not supported in your browser. You can use the keyboard instead, load a MIDI file or try Chrome.";
+    if (streamFail) {
+        document.getElementById("midiFail").innerHTML = "External MIDI input is not supported in your browser. You can use the keyboard instead, load a MIDI file or try Chrome.";
+    }
 };

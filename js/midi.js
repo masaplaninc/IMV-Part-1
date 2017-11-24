@@ -5,65 +5,71 @@ var channelsInstruments = null;
 var minNote = 48;
 var maxNote = 62;
 
+var  GeneralMidiNumber = 0;
+var  GeneralMidiInstrument = 'acoustic_grand_piano';
+
 // Handling MIDI file
 var midiFile;
 
-var pathView = 'explode';
+//var pathView = 'explode';
 
 function initListener() {
-	MIDI.Player.addListener(
-		function(data) {
-      if (data.message == NOTE_ON) {
-        addBall(data.note, data.velocity);
-      }
-    }
-	);
+    MIDI.Player.addListener(
+        function (data) {
+            if (data.message == NOTE_ON) {
+                // works for file
+                // but not for keyboard
+                addBall(data.note, data.velocity);
+            }
+        }
+    );
 }
 
 function loadPlugin() {
-	MIDI.loadPlugin({
-		soundfontUrl: "./lib/midi/soundfont/",
-		//instruments: ["acoustic_grand_piano"],
-    instruments: 2, // acoustic_grand_piano
-		onsuccess: function() {
-			console.log('MIDI-Plugin loaded');
-			initListener();
-		}
-	});
+    MIDI.loadPlugin({
+        soundfontUrl: "./lib/midi/soundfont/",
+        // instruments: ["acoustic_grand_piano"],
+        // instruments: 2, // acoustic_grand_piano
+        instrument: GeneralMidiInstrument,
+        onsuccess: function () {
+            console.log('MIDI-Plugin loaded');
+            initListener();
+        }
+    });
 }
 
 function play(data) {
-	$('#info_text').text('Loading track');
-	$('#info').show();
+    $('#info_text').text('Loading track');
+    $('#info').show();
 
-	MIDI.Player.stop();
-	MIDI.Player.loadFile(
-		data,
-		function() {
-			$('#info').hide();
-			$('#toggle').attr('disabled', false);
-			console.log('Song loaded');
-      
-      // Find max and min notes
-      minNote = 128;
-      maxNote = -1;
-      for (var i = 0; i < MIDI.Player.data.length; i++) {
-        var event = MIDI.Player.data[i][0].event;
-        if (event.subtype == "noteOn") {
-          minNote = event.noteNumber < minNote ? event.noteNumber : minNote;
-          maxNote = event.noteNumber > maxNote ? event.noteNumber : maxNote;
+    MIDI.Player.stop();
+    MIDI.Player.loadFile(
+        data,
+        function () {
+            $('#info').hide();
+            $('#toggle').attr('disabled', false);
+            console.log('Song loaded');
+
+            // Find max and min notes
+            minNote = 128;
+            maxNote = -1;
+            for (var i = 0; i < MIDI.Player.data.length; i++) {
+                var event = MIDI.Player.data[i][0].event;
+                if (event.subtype == "noteOn") {
+                    minNote = event.noteNumber < minNote ? event.noteNumber : minNote;
+                    maxNote = event.noteNumber > maxNote ? event.noteNumber : maxNote;
+                }
+            }
+
+            document.getElementById("midiLow").innerHTML = "min = " + minNote;
+            document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
+
+            channelsInstruments = MIDI.Player.getFileChannelInstruments();
+            instrumentsNames = MIDI.Player.getFileInstruments();
+
+            MIDI.Player.start();
         }
-      }
-
-      document.getElementById("midiLow").innerHTML = "min = " + minNote;
-      document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
-
-      channelsInstruments = MIDI.Player.getFileChannelInstruments();
-      instrumentsNames = MIDI.Player.getFileInstruments();
-
-			MIDI.Player.start();
-		}
-	);
+    );
 }
 
 
@@ -100,39 +106,43 @@ function onMIDIFailure(error) {
 }
 
 function getStatus(msg) {
-  return msg & 0b11110000;
+    return msg & 0b11110000;
 }
 
 function getChannel(msg) {
-  return msg & 0b00001111;
+    return msg & 0b00001111;
 }
 
 function mapLow(note) {
-  minNote = note;
-  document.getElementById("midiLow").innerHTML = "min = " + minNote;
-  document.getElementById("midiLow").className = "noMIDI";
-  expectLow = false;
+    minNote = note;
+    document.getElementById("midiLow").innerHTML = "min = " + minNote;
+    document.getElementById("midiLow").className = "noMIDI";
+    expectLow = false;
 }
 
 function mapHigh(note) {
-  maxNote = note;
-  document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
-  document.getElementById("midiHigh").className = "noMIDI";
-  expectHigh = false;
+    maxNote = note;
+    document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
+    document.getElementById("midiHigh").className = "noMIDI";
+    expectHigh = false;
 }
 
 function onMIDIMessage(message) {
-  data = message.data;
+    data = message.data;
 
-  if (getStatus(data[0]) == NOTE_ON) {
-    if (expectLow) {
-      mapLow(data[1]);
+    if (getStatus(data[0]) == NOTE_ON) {
+        if (expectLow) {
+            mapLow(data[1]);
+        }
+        else if (expectHigh) {
+            mapHigh(data[1]);
+        }
+        else {
+            MIDI.programChange(0, GeneralMidiNumber);
+            MIDI.setVolume(0, 127);
+            MIDI.noteOn(0, data[1], data[2], 0);
+
+            addBall(data[1], data[2]);
+        }
     }
-    else if (expectHigh) {
-      mapHigh(data[1]);
-    }
-    else {
-      addBall(data[1], data[2]);
-    }
-  }
 }

@@ -148,10 +148,11 @@
         #define RADIUS 2.0
         #define NOISE_AMP 0.06
         #define ANIMATION vec3(0.0, -3.0, 0.5)
-        #define C1 vec4(0.0, 0.0, 0.0, 0.9)
-        #define C2 vec4(0.6, 0.2, 0.8, 0.9)
-        #define C3 vec4(1.0, 0.55, 0.0, 0.9)
-        #define C4 vec4(1.0, 1.0, 0.5, 0.9)
+        #define ALPHA 0.85
+        #define C1 vec4(0.0, 0.0, 0.0, ALPHA)
+        #define C2 vec4(0.6, 0.2, 0.8, ALPHA)
+        #define C3 vec4(1.0, 0.55, 0.0, ALPHA)
+        #define C4 vec4(1.0, 1.0, 0.5, ALPHA)
 
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }

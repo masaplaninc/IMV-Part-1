@@ -292,8 +292,6 @@ function initBuffers() {
     gl.enableVertexAttribArray(aCoords);
     gl.enable(gl.DEPTH_TEST);
 
-    vec3.cross();
-
     rotator = new SimpleRotator(canvas, drawScene);
     rotator.setView([0, 0, 1], [0, 1, 0], 0);
     cube = createModel(cube(120));

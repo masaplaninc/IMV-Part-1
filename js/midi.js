@@ -13,18 +13,6 @@ var midiFile;
 
 //var pathView = 'explode';
 
-function noteOnStream(note){
-    console.log("noteonstream");
-    
-    MIDI.programChange(0, GeneralMidiNumber);
-    MIDI.setVolume(0, 127);
-    MIDI.noteOn(0, note, 127, 0);
-}
-
-function noteOffStream(note){
-    MIDI.noteOff(0, note, 0 );
-}
-
 function initListener() {
     MIDI.Player.addListener(
         function (data) {
@@ -37,138 +25,6 @@ function initListener() {
     );
 }
 
-
-function initkeyListeners() {
-    // play the note
-    window.addEventListener("keydown", function(event) {
-        mapKey(event);
-
-
-        MIDI.programChange(0, GeneralMidiInstrument);
-        MIDI.setVolume(0, 127);
-
-
-        event.preventDefault();
-        console.log("addEventListener down", event);
-
-        var note = 0;
-        switch (event.code) {
-            case "KeyA":
-                note = 48; // C3
-                break;
-            case "KeyW":
-                note = 49; // C#3
-                break;
-            case "KeyS":
-                note = 50; // D3
-                break;
-            case "KeyE":
-                note = 51; // D#3
-                break;
-            case "KeyD":
-                note = 52; // E3
-                break;
-            case "KeyF":
-                note = 53; // F3
-                break;
-            case "KeyT":
-                note = 54; // F#3
-                break;
-            case "KeyG":
-                note = 55; // G3
-                break;
-            case "KeyY":
-                note = 56; // G#3
-                break;
-            case "KeyH":
-                note = 57; // A3
-                break;
-            case "KeyU":
-                note = 58; // A#3
-                break;
-            case "KeyJ":
-                note = 59; // B3
-                break;
-            case "KeyK":
-                note = 60; // C4
-                break;
-            case "KeyO":
-                note = 61; // C#4
-                break;
-            case "KeyL":
-                note = 62; // D4
-                break;
-            default:
-                break;
-        }
-
-
-        noteOnStream(note);
-
-
-    });
-
-    window.addEventListener("keyup", function(event) {
-        event.preventDefault();
-        console.log("addEventListener up", event);
-
-        var note = 0;
-        switch (event.code) {
-            case "KeyA":
-                note = 48; // C3
-                break;
-            case "KeyW":
-                note = 49; // C#3
-                break;
-            case "KeyS":
-                note = 50; // D3
-                break;
-            case "KeyE":
-                note = 51; // D#3
-                break;
-            case "KeyD":
-                note = 52; // E3
-                break;
-            case "KeyF":
-                note = 53; // F3
-                break;
-            case "KeyT":
-                note = 54; // F#3
-                break;
-            case "KeyG":
-                note = 55; // G3
-                break;
-            case "KeyY":
-                note = 56; // G#3
-                break;
-            case "KeyH":
-                note = 57; // A3
-                break;
-            case "KeyU":
-                note = 58; // A#3
-                break;
-            case "KeyJ":
-                note = 59; // B3
-                break;
-            case "KeyK":
-                note = 60; // C4
-                break;
-            case "KeyO":
-                note = 61; // C#4
-                break;
-            case "KeyL":
-                note = 62; // D4
-                break;
-            default:
-                break;
-        }
-
-        noteOffStream(note);
-    });
-
-}
-
-
 function loadPlugin() {
     MIDI.loadPlugin({
         soundfontUrl: "./lib/midi/soundfont/",
@@ -178,7 +34,6 @@ function loadPlugin() {
         onsuccess: function () {
             console.log('MIDI-Plugin loaded');
             initListener();
-            initkeyListeners();
         }
     });
 }
@@ -280,6 +135,10 @@ function onMIDIMessage(message) {
             mapHigh(data[1]);
         }
         else {
+            MIDI.programChange(0, GeneralMidiNumber);
+            MIDI.setVolume(0, 127);
+            MIDI.noteOn(0, data[1], data[2], 0);
+
             addBall(data[1], data[2]);
         }
     }

@@ -602,9 +602,7 @@ function mapKey(event) {
             MIDI.programChange(0, GeneralMidiNumber);
             MIDI.setVolume(0, 127);
             MIDI.noteOn(0, note, 127, 0);
-
-
-
+            
             addBall(note, 63);
         }
     }

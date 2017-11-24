@@ -69,14 +69,17 @@ function play(data) {
 
 // Handling MIDI stream
 
-var midi, data;
+var midi;
+var data;
+var streamFail = false;
+
 // request MIDI access
 if (navigator.requestMIDIAccess) {
     navigator.requestMIDIAccess({
         sysex: false
     }).then(onMIDISuccess, onMIDIFailure);
 } else {
-    alert("MIDI is not supported in your browser. You can use the keyboard instead or try Chrome.");
+    streamFail = true;
 }
 
 // midi functions

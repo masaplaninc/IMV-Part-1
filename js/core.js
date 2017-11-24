@@ -5,8 +5,9 @@ const MAX_DIST = 100;
 const MAX_POS_SPHERES = 7;
 const MAX_POS_SPIKES = 1;
 const SPEED_BALLS = 0.01;
-const SPEED_CAM = 0.0025;
+const SPEED_CAM = 0.00125;
 const SPEED_ROTATION = 0.00005;
+const SPEED_FREQUENCY = 0.1;
 const OFFSET_START = 5;
 const N_TUNNELS = 4;
 const SPIKES_PER_TUNEL = 10;
@@ -178,6 +179,7 @@ function initBallsShader() {
     ballsShaderProgram.cameraUniform = gl.getUniformLocation(ballsShaderProgram, "uCamera");
     ballsShaderProgram.centerUniform = gl.getUniformLocation(ballsShaderProgram, "uCenter");
     ballsShaderProgram.scaleUniform = gl.getUniformLocation(ballsShaderProgram, "uScale");
+    ballsShaderProgram.noiseFrequencyUniform = gl.getUniformLocation(ballsShaderProgram, "uNoiseFrequency");
 }
 
 function initTunnelShader() {
@@ -215,13 +217,14 @@ function setSkyboxUniforms() {
     gl.uniformMatrix4fv(uProjection, false, pMatrix);
 }
 
-function setBallUniforms(position, scale) {
+function setBallUniforms(position, scale, frequency) {
     gl.useProgram(ballsShaderProgram);
     gl.uniform1f(ballsShaderProgram.timeUniform, 0.001 * (new Date().getTime() - startTime));
     gl.uniform1f(ballsShaderProgram.aspectRatioUniform, gl.viewportWidth / gl.viewportHeight);
     gl.uniform3fv(ballsShaderProgram.cameraUniform, camera);
     gl.uniform3fv(ballsShaderProgram.centerUniform, position);
     gl.uniform1f(ballsShaderProgram.scaleUniform, scale);
+    gl.uniform1f(ballsShaderProgram.noiseFrequencyUniform, frequency);
 }
 
 function setTunnelUniforms(color) {
@@ -372,7 +375,6 @@ function generateSpikes(remove) {
                      position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, Math.random() * SCALE_TUNNEL],
                      scale: [Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES]});
     }
-    console.log(spikes.length);
 }
 
 function drawObject(object, color) {
@@ -433,7 +435,7 @@ function drawScene() {
     gl.vertexAttribPointer(ballsShaderProgram.vertexPositionAttribute, bannerVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
     for (var i = 0; i < balls.length; i++) {
-        setBallUniforms(balls[i].position, balls[i].scale);
+        setBallUniforms(balls[i].position, balls[i].scale, balls[i].frequency);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems);
     }
 }
@@ -473,7 +475,10 @@ function addBall(note, velocity) {
     var x = Math.random() * (2 * MAX_POS_SPHERES) - MAX_POS_SPHERES;
     var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS_SPHERES) - MAX_POS_SPHERES;
     var z = camera[2] + OFFSET_START;
-    balls.push({position: [x, y, z], scale: SCALE_BALLS * velocity / 127});
+    balls.push({id: note, 
+                position: [x, y, z],
+                scale: SCALE_BALLS * velocity / 127,
+                frequency: SPEED_FREQUENCY});
 }
 
 function animate() {
@@ -618,4 +623,6 @@ window.onload = function () {
     for (var i = 0; i < N_TUNNELS; i++) {
         generateSpikes(false);
     }
+
+    document.getElementById("midiFail").innerHTML = "External MIDI input is not supported in your browser. You can use the keyboard instead, load a MIDI file or try Chrome.";
 };

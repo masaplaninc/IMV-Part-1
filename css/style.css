@@ -27,6 +27,11 @@ canvas {
     margin: 10px;
 }
 
+#midiFail {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.4);
+}
+
 .button {
     padding: 15px 15px;
     text-align: center;

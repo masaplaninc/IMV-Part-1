@@ -135,6 +135,7 @@
         uniform vec3 uCamera;
         uniform vec3 uCenter;
         uniform float uScale;
+        uniform float uNoiseFrequency;
 
         varying vec2 vPos;
 
@@ -143,9 +144,7 @@
         #define MARCH_STEPS 8
         #define RADIUS 2.0
         #define NOISE_AMP 0.06
-        #define NOISE_FREQUENCY 4.0
         #define ANIMATION vec3(0.0, -3.0, 0.5)
-        #define BACKGROUND vec4(0.0)
         #define C1 vec4(0.0, 0.0, 0.0, 0.9)
         #define C2 vec4(0.6, 0.2, 0.8, 0.9)
         #define C3 vec4(1.0, 0.55, 0.0, 0.9)
@@ -227,7 +226,7 @@
         }
 
         float renderBall(vec3 position, vec3 c, float r, out float distance) {
-            float noise = turbulence(position * NOISE_FREQUENCY + ANIMATION * uTime, 0.1, 1.5, 0.03) * NOISE_AMP;
+            float noise = turbulence(position * uNoiseFrequency + ANIMATION * uTime, 0.1, 1.5, 0.03) * NOISE_AMP;
             noise = saturate(abs(noise));
             distance = sphereDist(position, c, r) - noise;
             return noise;
@@ -238,12 +237,12 @@
             vec3 position = rayOrigin;
             float distance;
             float displacement;
-            for(int step = MARCH_STEPS; step >=0  ; --step) {
+            for (int step = MARCH_STEPS; step >=0  ; --step) {
                 displacement = renderBall(position, c, r, distance);
-                if(distance < 0.05) break;
+                if (distance < 0.05) break;
                 position += rayStep * distance;
             }
-            return mix(shade(displacement), BACKGROUND, float(distance >= 0.5));
+            return mix(shade(displacement), vec4(0.0), float(distance >= 0.5));
         }
 
         bool intersectSphere(vec3 ro, vec3 rd, vec3 pos, float radius, out vec3 intersectPoint) {
@@ -261,10 +260,10 @@
             vec3 vv = normalize(cross(ww, uu));
             vec3 direction = normalize(vPos.x * uu + vPos.y * vv + ww);
             
-            vec4 col = BACKGROUND;
+            vec4 col = vec4(0.0);
             vec3 intersection;
 
-            if(intersectSphere(uCamera, direction, uCenter, uScale * RADIUS + NOISE_AMP*6.0, intersection)) {
+            if (intersectSphere(uCamera, direction, uCenter, uScale * RADIUS + NOISE_AMP * 6.0, intersection)) {
                 col = march(intersection, direction, uCenter, uScale * RADIUS);
             }
 
@@ -280,6 +279,8 @@
             <label>Load MIDI file:</label>
             <input type="file" id="file_upload" class="upload"/>
         </span>
+
+        <p id="midiFail"></p>
 
         <button onclick="lowNote()" class="button">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
         <button onclick="highNote()" class="button">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>

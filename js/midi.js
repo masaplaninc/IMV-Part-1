@@ -76,7 +76,7 @@ if (navigator.requestMIDIAccess) {
         sysex: false
     }).then(onMIDISuccess, onMIDIFailure);
 } else {
-    alert("No MIDI support in your browser.");
+    alert("MIDI is not supported in your browser. You can use the keyboard instead or try Chrome.");
 }
 
 // midi functions

@@ -67,8 +67,8 @@ function play(data) {
             document.getElementById("midiLow").innerHTML = "min = " + minNote;
             document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
 
-            channelsInstruments = MIDI.Player.getFileChannelInstruments();
-            instrumentsNames = MIDI.Player.getFileInstruments();
+            // channelsInstruments = MIDI.Player.getFileChannelInstruments();
+            // instrumentsNames = MIDI.Player.getFileInstruments();
 
             MIDI.Player.start();
         }

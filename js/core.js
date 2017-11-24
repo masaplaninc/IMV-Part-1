@@ -371,9 +371,6 @@ function createModel(modelData) {
     gl.bindBuffer(gl.ARRAY_BUFFER, model.coordsBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, modelData.vertexPositions, gl.STATIC_DRAW);
 
-    // console.log(modelData.vertexPositions.length);
-    // console.log(modelData.indices.length);
-
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, model.indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, modelData.indices, gl.STATIC_DRAW);
 
@@ -383,7 +380,6 @@ function createModel(modelData) {
         gl.uniformMatrix4fv(uModelview, false, mvMatrix);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
-        // console.log(this.count);
     }
     return model;
 }

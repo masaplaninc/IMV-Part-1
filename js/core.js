@@ -1,4 +1,6 @@
-const SCALE = 1;
+const SCALE_BALLS = 1;
+const SCALE_TUNNEL = 13.6;
+const SCALE_SPIKES = 1;
 const MAX_DIST = 100;
 const MAX_POS = 7;
 const SPEED_BALLS = 0.01;
@@ -14,14 +16,8 @@ var lastTime = 0;
 
 var camera = [0, 0, -10];
 
-// skybox
-var skyboxShaderProgram;
-var skyboxVertexBuffer;
-var skyboxIndexBuffer;
-
 // skybox variables and functions
-
-var skyboxShaderProgram2;
+var skyboxShaderProgram;
 g_drawOnce = true;
 g_debug = true;
 
@@ -50,8 +46,7 @@ vec3.divideByScalar = function (out, a, scalar) {
     return out;
 };
 
-
-// ballls
+// balls
 var ballsShaderProgram;
 var bannerVertexBuffer;
 var balls = []
@@ -70,13 +65,12 @@ var app = {};
 app.meshes = {};
 
 // coordinates for view through tunnel
-var startXposition = 2.23, startYposition = -3.6;
-var startZposition = -10;
-var tunnelLen = 13.6;
-var endZposition = startZposition + tunnelLen;
+var startXposition = 0, startYposition = 0;
+var startZposition = 0;
+var endZposition = startZposition + SCALE_TUNNEL;
 var Zposition = startZposition;
 
-// Variable that stores  loading state of textures.
+// Variable that stores loading state of textures.
 var numberOfTextures = 6;
 var texturesLoaded = 0;
 
@@ -200,20 +194,8 @@ function createShaderProgram(vsName, fsName) {
 }
 
 function initSkyboxShader() {
-    skyboxShaderProgram = createShaderProgram("shader-vs-skybox", "shader-fs-skybox");
-
+    skyboxShaderProgram = createShaderProgram("skyboxVertexShader", "skyboxFragmentShader");
     gl.useProgram(skyboxShaderProgram);
-
-    skyboxShaderProgram.vertexPositionAttribute = gl.getAttribLocation(skyboxShaderProgram, "aVertexPosition");
-    gl.enableVertexAttribArray(skyboxShaderProgram.vertexPositionAttribute);
-
-    skyboxShaderProgram.pMatrixUniform = gl.getUniformLocation(skyboxShaderProgram, "uPMatrix");
-    skyboxShaderProgram.mvMatrixUniform = gl.getUniformLocation(skyboxShaderProgram, "uMVMatrix");
-}
-
-function initSkyboxShader2() {
-    skyboxShaderProgram2 = createShaderProgram("skyboxVertexShader", "skyboxFragmentShader");
-    gl.useProgram(skyboxShaderProgram2);
 }
 
 function initBallsShader() {
@@ -258,9 +240,6 @@ function initTunnelShader() {
 
 function initShaders() {
     initSkyboxShader();
-
-    initSkyboxShader2();
-
     initBallsShader();
     initTunnelShader();
 }
@@ -306,46 +285,9 @@ function setTunnelUniforms() {
 
 function initBuffers() {
     // skybox
-    var skyboxVertices = [
-        -1.0, -1.0, -1.0,
-        -1.0, -1.0, 1.0,
-        -1.0, 1.0, -1.0,
-        -1.0, 1.0, 1.0,
-        1.0, -1.0, -1.0,
-        1.0, -1.0, 1.0,
-        1.0, 1.0, -1.0,
-        1.0, 1.0, 1.0
-    ];
-
-    skyboxVertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyboxVertices), gl.STATIC_DRAW);
-
-    skyboxVertexBuffer.itemSize = 3;
-    skyboxVertexBuffer.numItems = 8;
-
-    var skyboxIndices = [
-        0, 2, 4, 4, 2, 6, // back face
-        0, 1, 2, 2, 1, 3, // left face
-        1, 5, 3, 3, 5, 7, // front face
-        5, 4, 7, 7, 4, 6, // right face
-        3, 7, 2, 2, 7, 6, // upper face
-        0, 4, 1, 1, 4, 5, // lower face
-    ];
-
-    skyboxIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(skyboxIndices), gl.STATIC_DRAW);
-
-    skyboxIndexBuffer.itemSize = 3;
-    skyboxIndexBuffer.numItems = 12;
-
-
-    // skybox 2
-
-    aCoords = gl.getAttribLocation(skyboxShaderProgram2, "coords");
-    uModelview = gl.getUniformLocation(skyboxShaderProgram2, "modelview");
-    uProjection = gl.getUniformLocation(skyboxShaderProgram2, "projection");
+    aCoords = gl.getAttribLocation(skyboxShaderProgram, "coords");
+    uModelview = gl.getUniformLocation(skyboxShaderProgram, "modelview");
+    uProjection = gl.getUniformLocation(skyboxShaderProgram, "projection");
 
     gl.enableVertexAttribArray(aCoords);
     gl.enable(gl.DEPTH_TEST);
@@ -356,6 +298,7 @@ function initBuffers() {
     rotator.setView([0, 0, 1], [0, 1, 0], 0);
     cube = createModel(cube(120));
 
+    loadTextureCube(g_skyBoxUrls);
 
     // balls
     var bannerVertices = [
@@ -432,14 +375,6 @@ function createModel(modelData) {
     return model;
 }
 
-/**
- * Sets up the Skybox
- */
-function setupSkybox() {
-    loadTextureCube(g_skyBoxUrls);
-}
-
-
 function drawTunnelObject(object) {
     setTunnelUniforms();
 
@@ -464,8 +399,8 @@ function drawScene() {
     mat4.perspective(70, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
     mat4.identity(mvMatrix);
 
-    // skybox 2
-    gl.useProgram(skyboxShaderProgram2);
+    // skybox
+    gl.useProgram(skyboxShaderProgram);
     gl.uniformMatrix4fv(uProjection, false, pMatrix);
 
     mvMatrix = rotator.getViewMatrix();
@@ -476,54 +411,41 @@ function drawScene() {
 
     // tunnel
     mat4.identity(mvMatrix);
-    mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
+    mat4.translate(mvMatrix, [0, 0, Zposition]);
 
-    if (Zposition >= endZposition - 10) {
+    if (Zposition >= endZposition - 5) {
         startZposition = endZposition;
-        endZposition += tunnelLen;
+        endZposition += SCALE_TUNNEL;
     }
 
     for (var i = 0; i < N_TUNNELS; i++) {
         mvPushMatrix();
-        mat4.translate(mvMatrix, [0, 0, -startZposition - i * tunnelLen]);
+        mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
         mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
+        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);        
 
         drawTunnelObject(app.meshes.gridFaces);
 
         mvPopMatrix();
     }
 
-
-    // Two spikes
-
+    // spikes
     mvPushMatrix();
-    mat4.translate(mvMatrix, [-startXposition, 0, -2]);
-
-    drawTunnelObject(app.meshes.spikeFaces);
-    drawTunnelObject(app.meshes.spikeFrame);
-
-    mvPopMatrix();
-
-    mvPushMatrix();
-    mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
-    mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
-
-    drawTunnelObject(app.meshes.spikeFaces);
-    drawTunnelObject(app.meshes.spikeFrame);
-
-    mvPopMatrix();
-
-    // skybox
     mat4.identity(mvMatrix);
-    mat4.translate(mvMatrix, [startXposition, startYposition, Zposition]); // as close to center of the tunnel as I get
-    setSkyboxUniforms();
+    mat4.translate(mvMatrix, [0, 0, -5]);
+    mat4.scale(mvMatrix, [3, 3, 3], );
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, skyboxVertexBuffer);
-    gl.vertexAttribPointer(skyboxShaderProgram.vertexPositionAttribute, skyboxVertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+    // drawTunnelObject(app.meshes.spikeFaces);
+    // drawTunnelObject(app.meshes.spikeFrame);
 
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
+    mvPopMatrix();
 
-    gl.drawElements(gl.TRIANGLES, skyboxIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    // mvPushMatrix();
+    // mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
+    // mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
+
+    // drawTunnelObject(app.meshes.spikeFaces);
+    // drawTunnelObject(app.meshes.spikeFrame);
 
     // balls
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
@@ -533,8 +455,6 @@ function drawScene() {
         setBallUniforms(balls[i].position, balls[i].scale);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, bannerVertexBuffer.numItems);
     }
-
-
 }
 
 function start(meshes) {
@@ -566,24 +486,19 @@ function start(meshes) {
     // skybox & balls
     initBuffers();
 
-    setupSkybox();
-
-
     setInterval(function () {
         if (texturesLoaded == numberOfTextures) { // only draw scene and animate when textures are loaded.
             requestAnimationFrame(animate);
             drawScene();
         }
     }, 15);
-
-
 }
 
 function addBall(note, velocity) {
     var x = Math.random() * (2 * MAX_POS) - MAX_POS;
     var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS) - MAX_POS;
     var z = camera[2] + OFFSET_START;
-    balls.push({position: [x, y, z], scale: SCALE * velocity / 127});
+    balls.push({position: [x, y, z], scale: SCALE_BALLS * velocity / 127});
 }
 
 function animate() {

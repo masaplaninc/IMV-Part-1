@@ -273,10 +273,17 @@
             gl_FragColor = col;
         }
     </script>
+     <script>
+        function showNext(before, next) {
+            document.getElementById(before).style.display='none';
+            document.getElementById(next).style.display='inline';
+        }
+    </script>
 
 </head>
 
 <body onkeydown="mapKey(event, true)" onkeyup="mapKey(event, false)">
+    <img id="welcome" class="center" src="assets/img//intro.png" onclick="showNext('welcome', 'content');" style="margin: 0px; padding: 0px"/>
     <h1>interactive music visualization</h1>
     <div class="right">
         <span>

@@ -1,13 +1,17 @@
 const SCALE_BALLS = 1;
 const SCALE_TUNNEL = 13.6;
-const SCALE_SPIKES = 1;
+const SCALE_SPIKES = 1.0;
 const MAX_DIST = 100;
-const MAX_POS = 7;
+const MAX_POS_SPHERES = 7;
+const MAX_POS_SPIKES = 1;
 const SPEED_BALLS = 0.01;
 const SPEED_CAM = 0.0025;
 const SPEED_ROTATION = 0.00005;
 const OFFSET_START = 5;
 const N_TUNNELS = 4;
+const SPIKES_PER_TUNEL = 10;
+const COLOR_TUNNEL = [0.0, 0.5, 1.0, 0.5];
+const COLOR_SPIKES = [1.0, 0.0, 0.0, 0.8];
 
 var canvas;
 var gl;
@@ -38,6 +42,10 @@ var g_skyBoxUrls = [
     'assets/img/Frontnz.jpg'
 ];
 
+// Variable that stores loading state of textures.
+var numberOfTextures = 6;
+var texturesLoaded = 0;
+
 // balls
 var ballsShaderProgram;
 var bannerVertexBuffer;
@@ -55,33 +63,7 @@ var startZposition = 0;
 var endZposition = startZposition + SCALE_TUNNEL;
 var Zposition = startZposition;
 
-// Variable that stores loading state of textures.
-var numberOfTextures = 6;
-var texturesLoaded = 0;
-
-//
-// Matrix utility functions
-//
-// mvPush   ... push current matrix on matrix stack
-// mvPop    ... pop top matrix from stack
-// degToRad ... convert degrees to radians
-//
-function mvPushMatrix() {
-    var copy = mat4.create();
-    mat4.set(mvMatrix, copy);
-    mvMatrixStack.push(copy);
-}
-
-function mvPopMatrix() {
-    if (mvMatrixStack.length == 0) {
-        throw "Invalid popMatrix!";
-    }
-    mvMatrix = mvMatrixStack.pop();
-}
-
-function degToRad(degrees) {
-    return degrees * Math.PI / 180;
-}
+var spikes = [];
 
 function initGL(canvas) {
     var gl = null;
@@ -242,7 +224,7 @@ function setBallUniforms(position, scale) {
     gl.uniform1f(ballsShaderProgram.scaleUniform, scale);
 }
 
-function setTunnelUniforms() {
+function setTunnelUniforms(color) {
     gl.useProgram(tunnelShaderProgram);
 
     gl.uniformMatrix4fv(tunnelShaderProgram.pMatrixUniform, false, pMatrix);
@@ -253,8 +235,8 @@ function setTunnelUniforms() {
     mat3.transpose(normalMatrix);
     gl.uniformMatrix3fv(tunnelShaderProgram.nMatrixUniform, false, normalMatrix);
 
-    gl.uniform3f(tunnelShaderProgram.materialColorUniform, 0.0, 0.5, 1.0);
-    gl.uniform1f(tunnelShaderProgram.materialAlphaUniform, 0.5);
+    gl.uniform3f(tunnelShaderProgram.materialColorUniform, color[0], color[1], color[2]);
+    gl.uniform1f(tunnelShaderProgram.materialAlphaUniform, color[3]);
 
     gl.uniform3f(tunnelShaderProgram.ambientColorUniform, 0.2, 0.2, 0.2);
     gl.uniform3f(tunnelShaderProgram.pointLightingLocationUniform, 2, 0, -5);
@@ -325,31 +307,29 @@ function loadTextureCube(urls) {
 }
 
 function makeCube(side) {
-    var s = (side || 1) / 2;
+    var s = (side || 1)/2;
     var coords = [];
     var normals = [];
     var texCoords = [];
     var indices = [];
-
     function face(xyz, nrm) {
-        var start = coords.length / 3;
+        var start = coords.length/3;
         var i;
         for (i = 0; i < 12; i++) {
             coords.push(xyz[i]);
         }
         for (i = 0; i < 4; i++) {
-            normals.push(nrm[0], nrm[1], nrm[2]);
+            normals.push(nrm[0],nrm[1],nrm[2]);
         }
-        texCoords.push(0, 0, 1, 0, 1, 1, 0, 1);
-        indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
+        texCoords.push(0,0,1,0,1,1,0,1);
+        indices.push(start,start+1,start+2,start,start+2,start+3);
     }
-
-    face([-s, -s, s, s, -s, s, s, s, s, -s, s, s], [0, 0, 1]);
-    face([-s, -s, -s, -s, s, -s, s, s, -s, s, -s, -s], [0, 0, -1]);
-    face([-s, s, -s, -s, s, s, s, s, s, s, s, -s], [0, 1, 0]);
-    face([-s, -s, -s, s, -s, -s, s, -s, s, -s, -s, s], [0, -1, 0]);
-    face([s, -s, -s, s, s, -s, s, s, s, s, -s, s], [1, 0, 0]);
-    face([-s, -s, -s, -s, -s, s, -s, s, s, -s, s, -s], [-1, 0, 0]);
+    face( [-s,-s,s, s,-s,s, s,s,s, -s,s,s], [0,0,1] );
+    face( [-s,-s,-s, -s,s,-s, s,s,-s, s,-s,-s], [0,0,-1] );
+    face( [-s,s,-s, -s,s,s, s,s,s, s,s,-s], [0,1,0] );
+    face( [-s,-s,-s, s,-s,-s, s,-s,s, -s,-s,s], [0,-1,0] );
+    face( [s,-s,-s, s,s,-s, s,s,s, s,-s,s], [1,0,0] );
+    face( [-s,-s,-s, -s,-s,s, -s,s,s, -s,s,-s], [-1,0,0] );
     return {
         vertexPositions: new Float32Array(coords),
         vertexNormals: new Float32Array(normals),
@@ -357,7 +337,6 @@ function makeCube(side) {
         indices: new Uint16Array(indices)
     }
 }
-
 
 function createModel(modelData) {
     var model = {};
@@ -382,8 +361,22 @@ function createModel(modelData) {
     return model;
 }
 
-function drawTunnelObject(object) {
-    setTunnelUniforms();
+function generateSpikes(remove) {
+    if (remove && spikes.length >= SPIKES_PER_TUNEL) {
+        spikes.splice(0, SPIKES_PER_TUNEL);
+    }
+
+    for (var i = 0; i < SPIKES_PER_TUNEL; i++) {
+        var angle = Math.random() * 2 * Math.PI;
+        spikes.push({angle: angle,
+            position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, Math.random() * SCALE_TUNNEL],
+            scale: [Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES]});
+    }
+    console.log(spikes.length);
+}
+
+function drawObject(object, color) {
+    setTunnelUniforms(color);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
     gl.vertexAttribPointer(tunnelShaderProgram.vertexPositionAttribute, object.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -394,7 +387,6 @@ function drawTunnelObject(object) {
 
     // Set the index for the vertices.
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer);
-    setTunnelUniforms();
 
     gl.drawElements(gl.TRIANGLES, object.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
@@ -404,51 +396,37 @@ function drawScene() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     mat4.perspective(70, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
-    mat4.identity(mvMatrix);
-    mat4.rotate(mvMatrix, rotation, [0, 0, 1]);
 
     // skybox
+    mat4.identity(mvMatrix);
+    mat4.rotate(mvMatrix, -rotation, [0, 0, 1]);
     setSkyboxUniforms();
     if (texID) {
         cube.render();
     }
 
     // tunnel
-    mat4.identity(mvMatrix);
-    mat4.translate(mvMatrix, [0, 0, Zposition]);
-
-    if (Zposition >= endZposition - 5) {
-        startZposition = endZposition;
-        endZposition += SCALE_TUNNEL;
-    }
-
     for (var i = 0; i < N_TUNNELS; i++) {
-        mvPushMatrix();
-        mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
+        mat4.identity(mvMatrix);
+        mat4.translate(mvMatrix, [0, 0, Zposition - startZposition - i * SCALE_TUNNEL]);
+        mat4.rotate(mvMatrix, rotation, [0, 0, 1]);
         mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);
 
-        drawTunnelObject(app.meshes.gridFaces);
-
-        mvPopMatrix();
+        drawObject(app.meshes.gridFaces, COLOR_TUNNEL);
     }
 
     // spikes
-    mvPushMatrix();
-    mat4.identity(mvMatrix);
-    mat4.translate(mvMatrix, [0, 0, -5]);
-    mat4.scale(mvMatrix, [3, 3, 3],);
+    for (var i = 0; i < N_TUNNELS; i++) {
+        for (var j = 0; j < SPIKES_PER_TUNEL; j++) {
+            var pos = i * SPIKES_PER_TUNEL + j;
+            mat4.identity(mvMatrix);
+            mat4.translate(mvMatrix, [spikes[pos].position[0], spikes[pos].position[1], Zposition - startZposition - spikes[pos].position[2] - i * SCALE_TUNNEL]);
+            mat4.rotate(mvMatrix, spikes[pos].angle + 0.5 * Math.PI, [0, 0, 1]);
+            mat4.scale(mvMatrix, spikes[pos].scale);
 
-    // drawTunnelObject(app.meshes.spikeFaces);
-    // drawTunnelObject(app.meshes.spikeFrame);
-
-    mvPopMatrix();
-
-    // mvPushMatrix();
-    // mat4.translate(mvMatrix, [-startXposition + 3, 3, 3]);
-    // mat4.rotate(mvMatrix, degToRad(90), [0, 0, 1]);
-
-    // drawTunnelObject(app.meshes.spikeFaces);
-    // drawTunnelObject(app.meshes.spikeFrame);
+            drawObject(app.meshes.spikeFaces, COLOR_TUNNEL);
+        }
+    }
 
     // balls
     gl.bindBuffer(gl.ARRAY_BUFFER, bannerVertexBuffer);
@@ -472,12 +450,6 @@ function start(meshes) {
     initShaders();
 
     // TUNNEL
-    // initialize textures
-    // NO TEXTURES YET
-    /*
-     initTextures();
-     */
-
     // initialize meshes
     app.meshes = meshes;
     // initialize the VBOs
@@ -498,8 +470,8 @@ function start(meshes) {
 }
 
 function addBall(note, velocity) {
-    var x = Math.random() * (2 * MAX_POS) - MAX_POS;
-    var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS) - MAX_POS;
+    var x = Math.random() * (2 * MAX_POS_SPHERES) - MAX_POS_SPHERES;
+    var y = ((note - minNote) / (maxNote - minNote)) * (2 * MAX_POS_SPHERES) - MAX_POS_SPHERES;
     var z = camera[2] + OFFSET_START;
     balls.push({position: [x, y, z], scale: SCALE_BALLS * velocity / 127});
 }
@@ -510,6 +482,12 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         Zposition += elapsed * SPEED_CAM;
+        if (Zposition >= endZposition - 1) {
+            startZposition = endZposition;
+            endZposition += SCALE_TUNNEL;
+            generateSpikes(true);
+        }
+
         rotation += elapsed * SPEED_ROTATION;
 
         for (var i = 0; i < balls.length; i++) {
@@ -620,8 +598,6 @@ function mapKey(event) {
             mapHigh(note);
         }
         else {
-            // work for keyboard
-            // but not for file
             addBall(note, 63);
         }
     }
@@ -638,4 +614,8 @@ window.onload = function () {
 
     document.getElementById("midiHigh").innerHTML = "max = " + maxNote;
     document.getElementById("midiLow").innerHTML = "min = " + minNote;
+
+    for (var i = 0; i < N_TUNNELS; i++) {
+        generateSpikes(false);
+    }
 };

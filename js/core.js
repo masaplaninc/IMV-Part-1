@@ -215,7 +215,7 @@ function initTunnelShader() {
 
     tunnelShaderProgram.materialColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialColor");
     tunnelShaderProgram.materialAlphaUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialAlpha");
-    
+
     tunnelShaderProgram.pointLightingLocationUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingLocation");
     tunnelShaderProgram.ambientColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uAmbientColor");
     tunnelShaderProgram.specularColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uSpecularColor");
@@ -325,29 +325,31 @@ function loadTextureCube(urls) {
 }
 
 function makeCube(side) {
-    var s = (side || 1)/2;
+    var s = (side || 1) / 2;
     var coords = [];
     var normals = [];
     var texCoords = [];
     var indices = [];
+
     function face(xyz, nrm) {
-        var start = coords.length/3;
+        var start = coords.length / 3;
         var i;
         for (i = 0; i < 12; i++) {
             coords.push(xyz[i]);
         }
         for (i = 0; i < 4; i++) {
-            normals.push(nrm[0],nrm[1],nrm[2]);
+            normals.push(nrm[0], nrm[1], nrm[2]);
         }
-        texCoords.push(0,0,1,0,1,1,0,1);
-        indices.push(start,start+1,start+2,start,start+2,start+3);
+        texCoords.push(0, 0, 1, 0, 1, 1, 0, 1);
+        indices.push(start, start + 1, start + 2, start, start + 2, start + 3);
     }
-    face( [-s,-s,s, s,-s,s, s,s,s, -s,s,s], [0,0,1] );
-    face( [-s,-s,-s, -s,s,-s, s,s,-s, s,-s,-s], [0,0,-1] );
-    face( [-s,s,-s, -s,s,s, s,s,s, s,s,-s], [0,1,0] );
-    face( [-s,-s,-s, s,-s,-s, s,-s,s, -s,-s,s], [0,-1,0] );
-    face( [s,-s,-s, s,s,-s, s,s,s, s,-s,s], [1,0,0] );
-    face( [-s,-s,-s, -s,-s,s, -s,s,s, -s,s,-s], [-1,0,0] );
+
+    face([-s, -s, s, s, -s, s, s, s, s, -s, s, s], [0, 0, 1]);
+    face([-s, -s, -s, -s, s, -s, s, s, -s, s, -s, -s], [0, 0, -1]);
+    face([-s, s, -s, -s, s, s, s, s, s, s, s, -s], [0, 1, 0]);
+    face([-s, -s, -s, s, -s, -s, s, -s, s, -s, -s, s], [0, -1, 0]);
+    face([s, -s, -s, s, s, -s, s, s, s, s, -s, s], [1, 0, 0]);
+    face([-s, -s, -s, -s, -s, s, -s, s, s, -s, s, -s], [-1, 0, 0]);
     return {
         vertexPositions: new Float32Array(coords),
         vertexNormals: new Float32Array(normals),
@@ -423,7 +425,7 @@ function drawScene() {
     for (var i = 0; i < N_TUNNELS; i++) {
         mvPushMatrix();
         mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
-        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]); 
+        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);
 
         drawTunnelObject(app.meshes.gridFaces);
 
@@ -434,7 +436,7 @@ function drawScene() {
     mvPushMatrix();
     mat4.identity(mvMatrix);
     mat4.translate(mvMatrix, [0, 0, -5]);
-    mat4.scale(mvMatrix, [3, 3, 3], );
+    mat4.scale(mvMatrix, [3, 3, 3],);
 
     // drawTunnelObject(app.meshes.spikeFaces);
     // drawTunnelObject(app.meshes.spikeFrame);
@@ -618,6 +620,8 @@ function mapKey(event) {
             mapHigh(note);
         }
         else {
+            // work for keyboard
+            // but not for file
             addBall(note, 63);
         }
     }

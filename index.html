@@ -273,24 +273,23 @@
     </script>
 
 </head>
+        <body onkeypress="mapKey(event)">
+    <h1>interactive music visualization</h1>
+    <div class="right">
+        <span>
+            <label>Load MIDI file:</label>
+            <input type="file" id="file_upload" class="upload"/>
+        </span>
 
-    <body onkeypress="mapKey(event)">
-
-    <span>
-        Load MIDI file:
-        <input type="file" id="file_upload"/>
-    </span>
-
-    <button onclick="lowNote()">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
-    <button onclick="highNote()">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
+        <button onclick="lowNote()" class="button">Send minimal available MIDI note</button><span id="midiLow" class="noMIDI">min = 0</span>
+        <button onclick="highNote()" class="button">Send maximal available MIDI note</button><span id="midiHigh" class="noMIDI">max = 127</span>
+        <label style="margin-top: 50px">MIDI on computer keyboard:</label>
+        <img src="assets/img/keyboardMIDImapping.png" height="15%">
+    </div>
 
     <!-- <canvas id="glcanvas" width="1280px" height="720px"> -->
     <canvas id="glcanvas" width="1024px" height="576px">
         No <code>&lt;canvas&gt;</code> suppport in your browser.
     </canvas>
-    
-    <div>
-        <img src="./assets/img/keyboardMIDImapping.png" height="15%">
-    </div>
 
 </body>

@@ -1,4 +1,4 @@
-const SCALE_BALLS = 1;
+const SCALE_BALLS = 1.5;
 const SCALE_TUNNEL = 13.6;
 const SCALE_SPIKES = 1.0;
 const MAX_DIST = 100;
@@ -10,7 +10,7 @@ const SPEED_ROTATION = 0.00005;
 const SPEED_FREQUENCY = 0.005;
 const OFFSET_START = 5;
 const N_TUNNELS = 4;
-const SPIKES_PER_TUNEL = 10;
+const SPIKES_PER_TUNEL = 40;
 const COLOR_TUNNEL = [0.0, 0.5, 1.0, 0.5];
 const COLOR_SPIKES = [1.0, 0.0, 0.0, 0.8];
 

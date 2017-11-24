@@ -17,9 +17,12 @@ function initListener() {
     MIDI.Player.addListener(
         function (data) {
             if (data.message == NOTE_ON) {
-                // works for file
-                // but not for keyboard
-                addBall(data.note, data.velocity);
+              // works for file
+              // but not for keyboard
+              addBall(data.note, data.velocity);
+            }
+            else if (data.message == NOTE_OFF) {
+              offBall(data.note);
             }
         }
     );
@@ -129,20 +132,26 @@ function mapHigh(note) {
 
 function onMIDIMessage(message) {
     data = message.data;
+    status = getStatus(data[0]);
+    note = data[1];
+    velocity = data[2];
 
-    if (getStatus(data[0]) == NOTE_ON) {
+    if (status == NOTE_ON) {
         if (expectLow) {
-            mapLow(data[1]);
+            mapLow(note);
         }
         else if (expectHigh) {
-            mapHigh(data[1]);
+            mapHigh(note);
         }
         else {
             MIDI.programChange(0, GeneralMidiNumber);
             MIDI.setVolume(0, 127);
-            MIDI.noteOn(0, data[1], data[2], 0);
+            MIDI.noteOn(0, note, velocity, 0);
 
-            addBall(data[1], data[2]);
+            addBall(note, velocity);
         }
+    }
+    else if (status == NOTE_OFF) {
+      offBall(note);
     }
 }

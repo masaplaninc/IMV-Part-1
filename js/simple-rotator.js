@@ -82,9 +82,9 @@ function SimpleRotator(canvas, callback, viewDirectionVector, viewUpVector, view
         applyTransvection(ray1,ray2);
         prevx = x;
         prevy = y;
-	if (callback) {
+    if (callback) {
 	    callback();
-	}
+    }
     }
     function doMouseUp(evt) {
         if (dragging) {

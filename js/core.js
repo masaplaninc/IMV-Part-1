@@ -50,7 +50,7 @@ var texturesLoaded = 0;
 // balls
 var ballsShaderProgram;
 var bannerVertexBuffer;
-var balls = []
+var balls = [];
 
 // TUNNEL
 var tunnelShaderProgram;

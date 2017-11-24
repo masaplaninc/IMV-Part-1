@@ -16,13 +16,17 @@ var lastTime = 0;
 
 var camera = [0, 0, -10];
 
-// skybox variables and functions
+// Model-view and projection matrix and model-view matrix stack
+var mvMatrixStack = [];
+var mvMatrix = mat4.create();
+var pMatrix = mat4.create();
+
+var expectLow = false;
+var expectHigh = false;
+
+
+// skybox
 var skyboxShaderProgram;
-g_drawOnce = true;
-g_debug = true;
-
-var rotator;   // A SimpleRotator object to enable rotation by mouse dragging.
-
 var texID;
 var cube;
 var g_skyBoxUrls = [
@@ -34,30 +38,10 @@ var g_skyBoxUrls = [
     'images/Frontnz.jpg'
 ];
 
-// extend vec3 for debugging
-vec3.toString = function (v) {
-    return v[0] + ', ' + v[1] + ', ' + v[2];
-};
-
-vec3.divideByScalar = function (out, a, scalar) {
-    out[0] = a[0] / scalar;
-    out[1] = a[1] / scalar;
-    out[2] = a[2] / scalar;
-    return out;
-};
-
 // balls
 var ballsShaderProgram;
 var bannerVertexBuffer;
 var balls = []
-
-// Model-view and projection matrix and model-view matrix stack
-var mvMatrixStack = [];
-var mvMatrix = mat4.create();
-var pMatrix = mat4.create();
-
-var expectLow = false;
-var expectHigh = false;
 
 // TUNNEL
 var tunnelShaderProgram;
@@ -292,9 +276,7 @@ function initBuffers() {
     gl.enableVertexAttribArray(aCoords);
     gl.enable(gl.DEPTH_TEST);
 
-    rotator = new SimpleRotator(canvas, drawScene);
-    rotator.setView([0, 0, 1], [0, 1, 0], 0);
-    cube = createModel(cube(120));
+    cube = createModel(makeCube(120));
 
     loadTextureCube(g_skyBoxUrls);
 
@@ -345,6 +327,39 @@ function loadTextureCube(urls) {
         img[i].src = urls[i];
     }
 }
+
+function makeCube(side) {
+    var s = (side || 1)/2;
+    var coords = [];
+    var normals = [];
+    var texCoords = [];
+    var indices = [];
+    function face(xyz, nrm) {
+        var start = coords.length/3;
+        var i;
+        for (i = 0; i < 12; i++) {
+            coords.push(xyz[i]);
+        }
+        for (i = 0; i < 4; i++) {
+            normals.push(nrm[0],nrm[1],nrm[2]);
+        }
+        texCoords.push(0,0,1,0,1,1,0,1);
+        indices.push(start,start+1,start+2,start,start+2,start+3);
+    }
+    face( [-s,-s,s, s,-s,s, s,s,s, -s,s,s], [0,0,1] );
+    face( [-s,-s,-s, -s,s,-s, s,s,-s, s,-s,-s], [0,0,-1] );
+    face( [-s,s,-s, -s,s,s, s,s,s, s,s,-s], [0,1,0] );
+    face( [-s,-s,-s, s,-s,-s, s,-s,s, -s,-s,s], [0,-1,0] );
+    face( [s,-s,-s, s,s,-s, s,s,s, s,-s,s], [1,0,0] );
+    face( [-s,-s,-s, -s,-s,s, -s,s,s, -s,s,-s], [-1,0,0] );
+    return {
+        vertexPositions: new Float32Array(coords),
+        vertexNormals: new Float32Array(normals),
+        vertexTextureCoords: new Float32Array(texCoords),
+        indices: new Uint16Array(indices)
+    }
+}
+
 
 function createModel(modelData) {
     var model = {};
@@ -400,8 +415,6 @@ function drawScene() {
     // skybox
     gl.useProgram(skyboxShaderProgram);
     gl.uniformMatrix4fv(uProjection, false, pMatrix);
-
-    mvMatrix = rotator.getViewMatrix();
 
     if (texID) {
         cube.render();

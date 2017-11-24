@@ -428,7 +428,6 @@ function drawScene() {
     for (var i = 0; i < N_TUNNELS; i++) {
         mvPushMatrix();
         mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
-        mat4.rotate(mvMatrix, Math.PI / 2, [0, 1, 0]);
         mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);        
 
         drawTunnelObject(app.meshes.gridFaces);

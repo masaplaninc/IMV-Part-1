@@ -5,6 +5,7 @@ const MAX_DIST = 100;
 const MAX_POS = 7;
 const SPEED_BALLS = 0.01;
 const SPEED_CAM = 0.0025;
+const SPEED_ROTATION = 0.00005;
 const OFFSET_START = 5;
 const N_TUNNELS = 4;
 
@@ -23,7 +24,6 @@ var pMatrix = mat4.create();
 
 var expectLow = false;
 var expectHigh = false;
-
 
 // skybox
 var skyboxShaderProgram;
@@ -47,6 +47,7 @@ var balls = []
 var tunnelShaderProgram;
 var app = {};
 app.meshes = {};
+var rotation = 0;
 
 // coordinates for view through tunnel
 var startXposition = 0, startYposition = 0;
@@ -207,19 +208,18 @@ function initTunnelShader() {
     tunnelShaderProgram.vertexNormalAttribute = gl.getAttribLocation(tunnelShaderProgram, "aVertexNormal");
     gl.enableVertexAttribArray(tunnelShaderProgram.vertexNormalAttribute);
 
-    tunnelShaderProgram.textureCoordAttribute = gl.getAttribLocation(tunnelShaderProgram, "aTextureCoord");
     tunnelShaderProgram.pMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uPMatrix");
     tunnelShaderProgram.mvMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uMVMatrix");
     tunnelShaderProgram.nMatrixUniform = gl.getUniformLocation(tunnelShaderProgram, "uNMatrix");
-    tunnelShaderProgram.samplerUniform = gl.getUniformLocation(tunnelShaderProgram, "uSampler");
-    tunnelShaderProgram.materialShininessUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialShininess");
-    tunnelShaderProgram.showSpecularHighlightsUniform = gl.getUniformLocation(tunnelShaderProgram, "uShowSpecularHighlights");
-    tunnelShaderProgram.useTexturesUniform = gl.getUniformLocation(tunnelShaderProgram, "uUseTextures");
-    tunnelShaderProgram.useLightingUniform = gl.getUniformLocation(tunnelShaderProgram, "uUseLighting");
-    tunnelShaderProgram.ambientColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uAmbientColor");
+    tunnelShaderProgram.shininessUniform = gl.getUniformLocation(tunnelShaderProgram, "uShininess");
+
+    tunnelShaderProgram.materialColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialColor");
+    tunnelShaderProgram.materialAlphaUniform = gl.getUniformLocation(tunnelShaderProgram, "uMaterialAlpha");
+    
     tunnelShaderProgram.pointLightingLocationUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingLocation");
-    tunnelShaderProgram.pointLightingSpecularColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingSpecularColor");
-    tunnelShaderProgram.pointLightingDiffuseColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uPointLightingDiffuseColor");
+    tunnelShaderProgram.ambientColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uAmbientColor");
+    tunnelShaderProgram.specularColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uSpecularColor");
+    tunnelShaderProgram.diffuseColorUniform = gl.getUniformLocation(tunnelShaderProgram, "uDiffuseColor");
 }
 
 function initShaders() {
@@ -230,9 +230,7 @@ function initShaders() {
 
 function setSkyboxUniforms() {
     gl.useProgram(skyboxShaderProgram);
-
-    gl.uniformMatrix4fv(skyboxShaderProgram.pMatrixUniform, false, pMatrix);
-    gl.uniformMatrix4fv(skyboxShaderProgram.mvMatrixUniform, false, mvMatrix);
+    gl.uniformMatrix4fv(uProjection, false, pMatrix);
 }
 
 function setBallUniforms(position, scale) {
@@ -247,11 +245,6 @@ function setBallUniforms(position, scale) {
 function setTunnelUniforms() {
     gl.useProgram(tunnelShaderProgram);
 
-    var texture = "gridTexture";
-    gl.uniform1i(tunnelShaderProgram.useTexturesUniform, texture != "none"); // ???
-
-    gl.uniform1i(tunnelShaderProgram.samplerUniform, 0); // this could cause trouble if the sampler wasnt at 0
-
     gl.uniformMatrix4fv(tunnelShaderProgram.pMatrixUniform, false, pMatrix);
     gl.uniformMatrix4fv(tunnelShaderProgram.mvMatrixUniform, false, mvMatrix);
 
@@ -260,11 +253,14 @@ function setTunnelUniforms() {
     mat3.transpose(normalMatrix);
     gl.uniformMatrix3fv(tunnelShaderProgram.nMatrixUniform, false, normalMatrix);
 
+    gl.uniform3f(tunnelShaderProgram.materialColorUniform, 0.0, 0.5, 1.0);
+    gl.uniform1f(tunnelShaderProgram.materialAlphaUniform, 0.5);
+
     gl.uniform3f(tunnelShaderProgram.ambientColorUniform, 0.2, 0.2, 0.2);
-    gl.uniform3f(tunnelShaderProgram.pointLightingLocationUniform, -10, 4, -20);
-    gl.uniform3f(tunnelShaderProgram.pointLightingSpecularColorUniform, 0.8, 0.8, 0.8);
-    gl.uniform3f(tunnelShaderProgram.pointLightingDiffuseColorUniform, 0.8, 0.8, 0.8);
-    gl.uniform1f(tunnelShaderProgram.materialShininessUniform, 10);
+    gl.uniform3f(tunnelShaderProgram.pointLightingLocationUniform, 2, 0, -5);
+    gl.uniform3f(tunnelShaderProgram.specularColorUniform, 1.0, 1.0, 1.0);
+    gl.uniform3f(tunnelShaderProgram.diffuseColorUniform, 1.0, 1.0, 1.0);
+    gl.uniform1f(tunnelShaderProgram.shininessUniform, 10);
 }
 
 function initBuffers() {
@@ -407,11 +403,10 @@ function drawScene() {
 
     mat4.perspective(70, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
     mat4.identity(mvMatrix);
+    mat4.rotate(mvMatrix, rotation, [0, 0, 1]);
 
     // skybox
-    gl.useProgram(skyboxShaderProgram);
-    gl.uniformMatrix4fv(uProjection, false, pMatrix);
-
+    setSkyboxUniforms();
     if (texID) {
         cube.render();
     }
@@ -428,7 +423,7 @@ function drawScene() {
     for (var i = 0; i < N_TUNNELS; i++) {
         mvPushMatrix();
         mat4.translate(mvMatrix, [0, 0, -startZposition - i * SCALE_TUNNEL]);
-        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]);        
+        mat4.scale(mvMatrix, [SCALE_TUNNEL, SCALE_TUNNEL, SCALE_TUNNEL]); 
 
         drawTunnelObject(app.meshes.gridFaces);
 
@@ -493,7 +488,7 @@ function start(meshes) {
     initBuffers();
 
     setInterval(function () {
-        if (texturesLoaded == numberOfTextures) { // only draw scene and animate when textures are loaded.
+        if (texturesLoaded == numberOfTextures) {
             requestAnimationFrame(animate);
             drawScene();
         }
@@ -513,6 +508,7 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         Zposition += elapsed * SPEED_CAM;
+        rotation += elapsed * SPEED_ROTATION;
 
         for (var i = 0; i < balls.length; i++) {
             // remove the ball if too far

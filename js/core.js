@@ -380,7 +380,7 @@ function createModel(modelData) {
         gl.uniformMatrix4fv(uModelview, false, mvMatrix);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
-    }
+    };
     return model;
 }
 

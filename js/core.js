@@ -369,7 +369,7 @@ function generateSpikes(remove) {
     for (var i = 0; i < SPIKES_PER_TUNEL; i++) {
         var angle = Math.random() * 2 * Math.PI;
         spikes.push({angle: angle,
-                     position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, startZposition + Math.random() * SCALE_TUNNEL],
+                     position: [Math.cos(angle) * MAX_POS_SPIKES, Math.sin(angle) * MAX_POS_SPIKES, Math.random() * SCALE_TUNNEL],
                      scale: [Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES, Math.random() * SCALE_SPIKES]});
     }
     console.log(spikes.length);
@@ -420,11 +420,11 @@ function drawScene() {
         for (var j = 0; j < SPIKES_PER_TUNEL; j++) {
             var pos = i * SPIKES_PER_TUNEL + j;
             mat4.identity(mvMatrix);
-            mat4.translate(mvMatrix, [spikes[pos].position[0], spikes[pos].position[1], Zposition - spikes[pos].position[2] - i * SCALE_TUNNEL]);
+            mat4.translate(mvMatrix, [spikes[pos].position[0], spikes[pos].position[1], Zposition - startZposition - spikes[pos].position[2] - i * SCALE_TUNNEL]);
             mat4.rotate(mvMatrix, spikes[pos].angle + 0.5 * Math.PI, [0, 0, 1]);     
             mat4.scale(mvMatrix, spikes[pos].scale);
 
-            drawObject(app.meshes.spikeFaces, COLOR_SPIKES);
+            drawObject(app.meshes.spikeFaces, COLOR_TUNNEL);
         }
     }
 
@@ -482,7 +482,7 @@ function animate() {
         var elapsed = timeNow - lastTime;
 
         Zposition += elapsed * SPEED_CAM;
-        if (Zposition >= endZposition - 5) {
+        if (Zposition >= endZposition - 1) {
             startZposition = endZposition;
             endZposition += SCALE_TUNNEL;
             generateSpikes(true);
